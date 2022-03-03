@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+
+    <folder name="Actions">
+
+        <folder name="Operators">
+            <file name="PySice2TestOpAction.instance">
+                <attr name="instanceCreate"
+                      methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
+                <attr name="operatorName" stringvalue="py_sice2_test_op"/>
+                <attr name="displayName" stringvalue="SICE2 Test (Python)"/>
+                <attr name="dialogTitle" stringvalue="SICE2 Test (Python)"/>
+                <attr name="helpId" stringvalue="pySice2TestDoc"/>  <!--The helpId if help contents is provided-->
+                <attr name="targetProductNameSuffix" stringvalue="_sice2test_py"/>
+                <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 Snow Retrieval."/>
+            </file>
+        </folder>
+
+        <folder name="Operators">
+            <file name="PySice2OpAction.instance">
+                <attr name="instanceCreate"
+                      methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
+                <attr name="operatorName" stringvalue="py_sice2_op"/>
+                <attr name="displayName" stringvalue="SICE2 (Python)"/>
+                <attr name="dialogTitle" stringvalue="SICE2 (Python)"/>
+                <attr name="helpId" stringvalue="pySice2Doc"/>  <!--The helpId if help contents is provided-->
+                <attr name="targetProductNameSuffix" stringvalue="_sice2_py"/>
+                <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 Snow Retrieval."/>
+            </file>
+        </folder>
+    </folder>
+
+    <folder name="Menu">
+        <folder name="Optical">
+            <folder name="Thematic Land Processing">
+                <file name="PySice2TestOpAction.shadow">
+                    <attr name="originalFile"
+                          stringvalue="Actions/Operators/PySice2TestOpAction.instance"/>
+                    <attr name="position" intvalue="13000"/>
+                </file>
+
+                <file name="PySice2OpAction.shadow">
+                    <attr name="originalFile"
+                          stringvalue="Actions/Operators/PySice2OpAction.instance"/>
+                    <attr name="position" intvalue="13000"/>
+                </file>
+            </folder>
+        </folder>
+    </folder>
+
+    <folder name="Services">
+        <folder name="JavaHelp">
+            <file name="org-esa-snap-sice2-snap-sice2-python-helpset.xml" url="helpset.xml">
+                <attr name="position" intvalue="4600"/>
+            </file>
+        </folder>
+    </folder>
+
+
+    <!-- Removes c2rcc ops from Graph Builder
+        see https://senbox.atlassian.net/browse/SNAP-395
+    -->
+    <!--<folder name="OperatorUIs">-->
+        <!--<file name="org.esa.s3tbx.c2rcc">-->
+            <!--<attr name="operatorName" stringvalue="c2rcc"/>-->
+            <!--<attr name="disableFromGraphBuilder" stringvalue="true"/>-->
+        <!--</file>-->
+    <!--</folder>-->
+
+
+</filesystem>
