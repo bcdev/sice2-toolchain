@@ -3,8 +3,11 @@ import platform
 import tempfile
 import sys
 import os
-import numpy
+import numpy as np
+import matplotlib.pyplot as plt
+
 import snappy
+from snappy import ProductIO
 from snappy import FlagCoding
 
 # If a Java type is needed which is not imported by snappy by default it can be retrieved manually.
@@ -54,6 +57,8 @@ class Sice2Op:
         # TODO: generate test data: run script https://github.com/GEUS-SICE/SICE/blob/master/S3.xml
         # on suitable OLCI product from S3Snow
 
+
+
         # Via the context object the source product which shall be processed can be retrieved
         # source_product = context.getSourceProduct('source')
         source_product = snappy.Product('dummy', 'dummy', 1, 1)
@@ -63,6 +68,33 @@ class Sice2Op:
         # print('initialize: source product location is', source_product.getFileLocation())
 
         print('initialize: tif_directory =', self.tif_directory)
+        tif_files = os.listdir(self.tif_directory)
+        for tif_file in tif_files:
+            if tif_file.lower().endswith('.tif'):
+                print('init: tif_file =', tif_file)
+                if tif_file == 'r_TOA_S1.tif':
+                    file_path = os.path.join(self.tif_directory, tif_file)
+                    geotif_product = ProductIO.readProduct(file_path)
+                    print('init: file_path =', file_path)
+                    # r_toa_01_band = geotif_product.getBand('band_1')
+                    r_toa_01_band = geotif_product.getBand('S1_reflectance_an')
+                    # w = r_toa_01_band.getRasterWidth()
+                    # h = r_toa_01_band.getRasterHeight()
+                    w = geotif_product.getSceneRasterWidth()
+                    h = geotif_product.getSceneRasterHeight()
+                    r_toa_01_data = np.zeros(w * h, np.float32)
+                    r_toa_01_band.readPixels(0, 0, w, h, r_toa_01_data)
+                    geotif_product.dispose()
+                    r_toa_01_data.shape = h, w
+                    imgplot = plt.imshow(r_toa_01_data)
+                    imgplot.write_png('radiance_13.png')
+                    # todo: works for SLSTR inputs, but OLCI input tifs seem to be broken, SNAP cannot read images
+                    # check S3.xml for one OLCI and one SLSTR band:
+                    # compare OLCI Read --> Rad2Refl --> Reproject --> Band Subset --> Write
+                    # with SLSTR Read --> Rad2Refl --> Resample --> Reproject --> Band Subset --> Write
+                    # (for OLCI, why not Band Subset before Rad2Refl --> Reproject ?)
+
+
 
         # As it is always a good idea to separate responsibilities the algorithmic methods are put
         # into an other class
@@ -125,8 +157,8 @@ class Sice2Op:
         # Convert the data into numpy data. It is easier and faster to work with as if you use plain python arithmetic
         # lower_data = numpy.array(lower_samples, dtype=numpy.float32) * self.lower_factor
         # upper_data = numpy.array(upper_samples, dtype=numpy.float32) * self.upper_factor
-        lower_data = numpy.array([0.8])  # test!
-        upper_data = numpy.array([0.7])
+        lower_data = np.array([0.8])  # test!
+        upper_data = np.array([0.7])
 
         # Doing the actual computation
         ndsi = self.sice2algo.compute_ndsi(lower_data, upper_data)
