@@ -1,0 +1,185 @@
+<graph id="S3">
+  <version>1.0</version>
+
+  <!--
+      + Read OLCI > Rad2Refl > Reproject
+        + Write bands 1
+        + Write SZA, OZA, SAA, OAA, ozone, water, altitude
+      + Read SLSTR > Rad2Refl
+        + Resample R > Reproject
+          + Write bands 1
+        + Resample BT > Reproject
+          + Write bands 7
+
+      GPT bug means we can't write out band.tif, but have to use some other name.
+      I chose "band_x.tif".
+  -->
+
+  <node id="Read_OLCI">
+    <operator>Read</operator>
+    <parameters>
+      <file>${OLCIsource}/xfdumanifest.xml</file>
+      <formatName>Sen3</formatName>
+      <!-- https://forum.step.esa.int/t/error-when-selecting-multiple-bands-from-slstr-file/15319 -->
+      <!-- Sen3 ensures that SLSTR is read as multisize -->
+    </parameters>
+  </node>
+
+  <node id="Rad2Refl_OLCI">
+    <operator>Rad2Refl</operator>
+    <sources><source>Read_OLCI</source></sources>
+    <parameters>
+      <sensor>OLCI</sensor>
+      <copyTiePointGrids>true</copyTiePointGrids>
+      <copyFlagBandsAndMasks>true</copyFlagBandsAndMasks>
+      <copyNonSpectralBands>true</copyNonSpectralBands>
+    </parameters>
+  </node>
+
+  <node id="Reproject_OLCI">
+    <operator>Reproject</operator>
+    <sources><source>Rad2Refl_OLCI</source></sources>
+    <parameters>
+      <crs>EPSG:3413</crs>
+      <resampling>Nearest</resampling>
+      <noDataValue>NaN</noDataValue>
+      <includeTiePointGrids>true</includeTiePointGrids>
+    </parameters>
+  </node>
+
+  <node id="Subset_OLCI_Oa01">
+    <operator>Subset</operator>
+    <sources><source>Reproject_OLCI</source></sources>
+    <parameters><sourceBands>Oa01_reflectance</sourceBands>
+        <copyMetadata>false</copyMetadata>
+    </parameters>
+  </node>
+    
+  <node id="Write_OLCI_Oa01">
+    <operator>Write</operator>
+    <sources><sourceProduct>Subset_OLCI_Oa01</sourceProduct></sources>
+    <parameters>
+      <file>${targetFolder}/r_TOA_01_x.tif</file><formatName>GeoTIFF</formatName>
+    </parameters>
+  </node>
+
+
+
+  <!--
+      SLSTR Top of Atmosphere reflectances (r_TOA_SX): 1,5
+      SLSTR Brightness Temperatures (BT_SX): 7,8,9
+  -->
+
+  <!--
+      SLSTR operators
+  -->
+
+  <node id="Read_SLSTR">
+    <operator>Read</operator>
+    <parameters>
+      <file>${SLSTRsource}/xfdumanifest.xml</file>
+      <formatName>Sen3</formatName>
+      <!-- https://forum.step.esa.int/t/error-when-selecting-multiple-bands-from-slstr-file/15319 -->
+      <!-- Sen3 ensures that SLSTR is read as multisize -->
+    </parameters>
+  </node>
+
+  <node id="Rad2Refl_SLSTR">
+    <operator>Rad2Refl</operator>
+    <sources><source>Read_SLSTR</source></sources>
+    <parameters>
+      <sensor>SLSTR_500m</sensor>
+      <copyTiePointGrids>true</copyTiePointGrids>
+      <copyFlagBandsAndMasks>false</copyFlagBandsAndMasks>
+      <copyNonSpectralBands>false</copyNonSpectralBands>
+    </parameters>
+  </node>
+
+  <node id="Resample_SLSTR_R">
+    <operator>Resample</operator>
+    <sources>
+      <sourceProduct refid="Rad2Refl_SLSTR"/>
+    </sources>
+    <parameters>
+      <referenceBand>S1_reflectance_an</referenceBand>
+      <upsampling>Nearest</upsampling>
+      <downsampling>First</downsampling>
+      <flagDownsampling>First</flagDownsampling>
+      <resampleOnPyramidLevels>true</resampleOnPyramidLevels>
+    </parameters>
+  </node>
+
+  <node id="Reproject_SLSTR_R">
+    <operator>Reproject</operator>
+    <sources><source>Resample_SLSTR_R</source></sources>
+    <parameters>
+      <crs>EPSG:3413</crs>
+      <resampling>Nearest</resampling>
+      <noDataValue>NaN</noDataValue>
+      <includeTiePointGrids>true</includeTiePointGrids>
+    </parameters>
+  </node>
+
+  <node id="Resample_SLSTR_BT">
+    <operator>Resample</operator>
+    <sources>
+      <sourceProduct refid="Read_SLSTR"/>
+    </sources>
+    <parameters>
+      <referenceBand>S1_radiance_an</referenceBand>
+      <upsampling>Nearest</upsampling>
+      <downsampling>First</downsampling>
+      <flagDownsampling>First</flagDownsampling>
+      <resampleOnPyramidLevels>true</resampleOnPyramidLevels>
+    </parameters>
+  </node>
+
+  <node id="Reproject_SLSTR_BT">
+    <operator>Reproject</operator>
+    <sources><source>Resample_SLSTR_BT</source></sources>
+    <parameters>
+      <crs>EPSG:3413</crs>
+      <resampling>Nearest</resampling>
+      <noDataValue>NaN</noDataValue>
+      <includeTiePointGrids>true</includeTiePointGrids>
+    </parameters>
+  </node>
+
+  <!--
+      SLSTR bands selection and writing
+  -->
+
+  <node id="Subset_01">
+    <operator>Subset</operator>
+    <sources>
+      <source>Reproject_SLSTR_R</source>
+    </sources>
+    <parameters>
+      <sourceBands>S1_reflectance_an</sourceBands>
+    </parameters>
+  </node>
+
+  <node id="Write_01">
+    <operator>Write</operator>
+    <sources><sourceProduct>Subset_01</sourceProduct></sources>
+    <parameters><file>${targetFolder}/r_TOA_S1.tif</file><formatName>GeoTIFF</formatName></parameters>
+  </node>
+
+  <node id="Subset_07">
+    <operator>Subset</operator>
+    <sources>
+      <source>Reproject_SLSTR_BT</source>
+    </sources>
+    <parameters>
+      <sourceBands>S7_BT_in</sourceBands>
+    </parameters>
+  </node>
+
+  <node id="Write_07">
+    <operator>Write</operator>
+    <sources><sourceProduct>Subset_07</sourceProduct></sources>
+    <parameters><file>${targetFolder}/BT_S7.tif</file><formatName>GeoTIFF</formatName></parameters>
+  </node>
+
+
+</graph>

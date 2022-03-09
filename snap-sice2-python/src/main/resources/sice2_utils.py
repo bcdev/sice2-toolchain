@@ -82,3 +82,7 @@ def qsimp(func, a, b):
     print("Max iteration reached")
     
     return s
+
+def mult_channel(c, A):
+    tmp = A.T * c
+    return tmp.T

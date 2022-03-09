@@ -8,6 +8,10 @@ This script contains the constants needed by the pySICEv1.1 library.
 
 import numpy as np
 
+OLCI_NUM_SPECTRAL_BANDS = 21
+
+AOT = 0.1
+
 # solar spectrum constants
 f0=32.38
 f1=-160140.33

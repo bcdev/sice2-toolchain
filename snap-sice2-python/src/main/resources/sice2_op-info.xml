@@ -27,7 +27,7 @@
 
     <parameters>
         <parameter>
-            <name>tifDir</name>
+            <name>tifInputDir</name>
             <description>The directory containing the input tif files.</description>
             <label>Input tif file directory</label>
             <dataType>java.lang.String</dataType>
@@ -35,6 +35,16 @@
             <!-- An empty parameter is not allowed -->
             <notEmpty>true</notEmpty>
         </parameter>
+        <parameter>
+            <name>tifOutputDir</name>
+            <description>The directory containing the output tif files.</description>
+            <label>Output tif file directory</label>
+            <dataType>java.lang.String</dataType>
+            <defaultValue>.</defaultValue>
+            <!-- An empty parameter is not allowed -->
+            <notEmpty>true</notEmpty>
+        </parameter>
+
 
     </parameters>
 

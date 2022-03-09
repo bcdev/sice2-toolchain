@@ -1,5 +1,6 @@
-
 import numpy as np
+
+import sice2_constants
 from sice2_constants import w, bai, xa, ya, f0, f1, f2, bet, gam, coef1, coef2, coef3, coef4
 from sice2_utils import qsimp, funp
 
@@ -22,7 +23,7 @@ class Sice2Algo:
         ndsi_flags = ((ndsi_pos << 3) + (ndsi_neg << 2) + (ndsi_high << 1) + ndsi_low).astype(np.uint8)
         return ndsi_flags
 
-    def ozone_scattering(ozone, tozon, sza, vza, toa):
+    def ozone_scattering(self, ozone, tozon, sza, vza, toa):
         scale = np.arccos(-1.) / 180.  # rad per degree
         eps = 1.55
         # ecmwf ozone from OLCI file (in Kg.m-2) to DOBSON UNITS
@@ -31,10 +32,10 @@ class Sice2Algo:
 
         amf = 1. / np.cos(sza * scale) + 1. / np.cos(vza * scale)
 
-        BX = (toa[20,:,:]**(1. - eps)) * (toa[16,:,:]**eps) / toa[6,:,:]
-        BXXX = np.log(BX) / 1.11e-4 / amf
-        BXXX[BXXX > 500] = 999
-        BXXX[BXXX < 0] = 999
+        bx = (toa[20, :, :] ** (1. - eps)) * (toa[16, :, :] ** eps) / toa[6, :, :]
+        o3_sice = np.log(bx) / 1.11e-4 / amf
+        o3_sice[o3_sice > 500] = 999
+        o3_sice[o3_sice < 0] = 999
 
         # Correcting TOA reflectance for ozone and water scattering
 
@@ -48,33 +49,38 @@ class Sice2Algo:
         tvoda = tozon * 0 + 1
         toa_cor_o3 = toa * np.nan
 
-        for i in range(21):
+        for i in range(sice2_constants.OLCI_NUM_SPECTRAL_BANDS):
+            toa_cor_o3[i, :, :] = toa[i, :, :] * tvoda[i] * np.exp(amf * tozon[i] * totadu / 404.59)
 
-            toa_cor_o3[i, :, :] = toa[i, :, :] * tvoda[i] \
-                                  * np.exp(amf * tozon[i] * totadu / 404.59)
+        return o3_sice, toa_cor_o3
 
-        return BXXX, toa_cor_o3
+    def view_geometry(self, vaa, saa, sza, vza):
+        """
+        Transfer of OLCI relative azimuthal angle to the definition used in radiative transfer code
+        :param vaa:
+        :param saa:
+        :param sza:
+        :param vza:
+        :return: raa_deg, cos_sza, cos_vza, ak1, ak2, amf, raa_rt_def
+        """
 
-    def view_geometry(vaa, saa, sza, vza, aot, height):
-        # transfer of OLCI relative azimuthal angle to the definition used in
-        # radiative transfer code
-        raa = 180. - (vaa - saa)
-        as1 = np.sin(sza * np.pi / 180.)
-        as2 = np.sin(vza * np.pi / 180.)
+        raa_deg = 180. - (vaa - saa)
+        sin_sza = np.sin(sza * np.pi / 180.)
+        sin_vza = np.sin(vza * np.pi / 180.)
 
-        am1 = np.cos(sza * np.pi / 180.)
-        am2 = np.cos(vza * np.pi / 180.)
+        cos_sza = np.cos(sza * np.pi / 180.)
+        cos_vza = np.cos(vza * np.pi / 180.)
 
-        ak1 = 3. * (1. + 2. * am1) / 7.
-        ak2 = 3. * (1. + 2. * am2) / 7.
+        ak1 = 3. * (1. + 2. * cos_sza) / 7.
+        ak2 = 3. * (1. + 2. * cos_vza) / 7.
 
-        cofi = np.cos(raa * np.pi / 180.)
-        amf = 1. / am1 + 1. / am2
-        co = -am1 * am2 + as1 * as2 * cofi
+        cos_raa = np.cos(raa_deg * np.pi / 180.)
+        amf = 1. / cos_sza + 1. / cos_vza
+        raa_rt_def = -cos_sza * cos_vza + sin_sza * sin_vza * cos_raa
 
-        return raa, am1, am2, ak1, ak2, amf, co
+        return raa_deg, cos_sza, cos_vza, ak1, ak2, amf, raa_rt_def
 
-    def aerosol_properties(aot, height, co):
+    def aerosol_properties(self, aot, height, co):
         # Atmospheric optical thickness
         tauaer = aot * (w / 0.5) ** (-1.3)
 
@@ -94,7 +100,6 @@ class Sice2Algo:
         pr = 0.75 * (1. + co ** 2)
 
         for i in range(21):
-
             taumol[i, :, :] = ak * 0.00877 / w[i] ** (4.05)
             tau[i, :, :] = tauaer[i] + taumol[i, :, :]
 
@@ -109,7 +114,7 @@ class Sice2Algo:
 
         return tau, p, g, gaer, taumol, tauaer
 
-    def snow_properties(toa, ak1, ak2):
+    def snow_properties(self, toa, ak1, ak2):
         # retrieval of snow properties ( R_0, size of grains from OLCI channels 865[17] and 1020nm[21]
         # assumed not influenced by atmospheric scattering and absorption processes)
 
@@ -117,10 +122,15 @@ class Sice2Algo:
         alpha2 = 4. * np.pi * akap2 / 1.020
         eps = 1.549559365010611
 
+        print('rtoa[16, 350,800]: ' + str(toa[16, 350,800]))
+        print('rtoa[20, 350,800]: ' + str(toa[16, 350,800]))
+        print('ak1[500,500]: ' + str(ak1[500,500]))
+        print('ak2[500,500]: ' + str(ak2[500,500]))
         # reflectivity of nonabsorbing snow layer
         rr1 = toa[16, :, :]
         rr2 = toa[20, :, :]
         r0 = (rr1 ** eps) * (rr2 ** (1. - eps))
+        print('r0[350,800]: ' + str(r0[350,800]))
 
         # effective absorption length(mm)
         bal = np.log(rr2 / r0) * np.log(rr2 / r0) / alpha2 / (ak1 * ak2 / r0) ** 2
@@ -133,7 +143,7 @@ class Sice2Algo:
 
         return D, area, al, r0, bal
 
-    def prepare_coef(tau, g, p, am1, am2, amf, gaer, taumol, tauaer):
+    def prepare_coef(self, tau, g, p, am1, am2, amf, gaer, taumol, tauaer):
         astra = tau * np.nan
         rms = tau * np.nan
         t1 = tau * np.nan
@@ -152,7 +162,6 @@ class Sice2Algo:
         sssss = (wa1 - wa2) / (1. + bex) + wa2
 
         for i in range(21):
-
             astra[i, :, :] = (1. - np.exp(-tau[i, :, :] * amf)) / (am1 + am2) / 4.
             rms[i, :, :] = 1. - b1[i, :, :] * b2[i, :, :] / oskar[i, :, :] \
                            + (3. * (1. + g[i, :, :]) * am1 * am2 - 2. * (am1 + am2)) * astra[i, :, :]
@@ -186,7 +195,7 @@ class Sice2Algo:
 
         return t1, t2, ratm, r, astra, rms
 
-    def snow_impurities(alb_sph, bal):
+    def snow_impurities(self, alb_sph, bal):
         # analysis of snow impurities
         # ( the concentrations below 0.0001 are not reliable )
         # bf    normalized absorption coefficient of pollutants ay 1000nm ( in inverse mm)
@@ -229,7 +238,7 @@ class Sice2Algo:
 
         return ntype, bf, conc
 
-    def alb2rtoa(a, t1, t2, r0, ak1, ak2, ratm, r):
+    def alb2rtoa(self, a, t1, t2, r0, ak1, ak2, ratm, r):
         # Function that calculates the theoretical reflectance from a snow spherical albedo a
         # This function can then be solved to find optimal snow albedo
         # Inputs:
@@ -243,7 +252,7 @@ class Sice2Algo:
 
         return rs
 
-    def salbed(tau, g):
+    def salbed(self, tau, g):
         # WARNING: NOT USED ANYMORE
         # SPHERICAL ALBEDO OF TERRESTRIAL ATMOSPHERE:
         # bav: replaced as by a_s
@@ -268,7 +277,7 @@ class Sice2Algo:
 
         return salbed
 
-    def zbrent(f, x0, x1, max_iter=100, tolerance=1e-6):
+    def zbrent(self, f, x0, x1, max_iter=100, tolerance=1e-6):
         # Equation solver using Brent's method
         # https://en.wikipedia.org/wiki/Brent%27s_method
         # Brent’s is essentially the Bisection method augmented with Inverse
@@ -340,7 +349,7 @@ class Sice2Algo:
 
         return x1
 
-    def plane_albedo_sw_approx(D, am1):
+    def plane_albedo_sw_approx(self, D, am1):
         anka = 0.7389 - 0.1783 * am1 + 0.0484 * am1 ** 2.
         banka = 0.0853 + 0.0414 * am1 - 0.0127 * am1 ** 2.
         canka = 0.1384 + 0.0762 * am1 - 0.0268 * am1 ** 2.
@@ -349,7 +358,7 @@ class Sice2Algo:
         return anka + banka * np.exp(-1000 * D / diam1) + canka \
                * np.exp(-1000 * D / diam2)
 
-    def spher_albedo_sw_approx(D):
+    def spher_albedo_sw_approx(self, D):
         anka = 0.6420
         banka = 0.1044
         canka = 0.1773
@@ -358,7 +367,7 @@ class Sice2Algo:
         return anka + banka * np.exp(-1000 * D / diam1) + canka \
                * np.exp(-1000 * D / diam2)
 
-    def qsimp(func, a, b):
+    def qsimp(self, func, a, b):
         # integrate function between a and b using simpson's method.
         # works as fast as scipy.integrate quad
         eps = 1.e-3
@@ -378,7 +387,6 @@ class Sice2Algo:
                 sum = 0.
 
                 for jj in range(it):
-
                     sum = sum + func(x)
                     x = x + delta
                 st = 0.5 * (st + (b - a) * sum / tnm)
@@ -394,10 +402,11 @@ class Sice2Algo:
 
         return s
 
-    def BBA_calc_clean(al, ak1):
+    def BBA_calc_clean(self, al, ak1):
         # for clean snow
         # plane albedo
         sph_calc = 0  # planar
+
         # visible(0.3-0.7micron)
 
         def func_integ(x):
@@ -426,7 +435,7 @@ class Sice2Algo:
 
         return p1, p2, s1, s2
 
-    def BBA_calc_pol(alb, asol, sol1_pol, sol2, sol3_pol):
+    def BBA_calc_pol(self, alb, asol, sol1_pol, sol2, sol3_pol):
         # polluted snow
         # NEW CODE FOR BBA OF BARE ICE
         # alb is either the planar or spherical albedo
@@ -459,7 +468,11 @@ class Sice2Algo:
         r7 = alb[16, :]
         r8 = alb[20, :]
 
-        sa1, a1, b1, c1 = quad_func(alam2, alam3, alam5, r2, r3, r5)
+        # print('alb[0, 350,800]: ' + str(alb[0, 350,800]))
+        # print('alb[5, 350,800]: ' + str(alb[5, 350,800]))
+        # print('alb[10, 350,800]: ' + str(alb[10, 350,800]))
+
+        sa1, a1, b1, c1 = self.quad_func(alam2, alam3, alam5, r2, r3, r5)
         ajx1 = a1 * sol1_pol
         ajx2 = b1 * coef1
         ajx3 = c1 * coef2
@@ -467,7 +480,7 @@ class Sice2Algo:
         aj1 = ajx1 + ajx2 + ajx3
         # segment 2.1
         # QUADRATIC POLYNOMIal for the range 709-865nm
-        sa1, a2, b2, c2 = quad_func(alam5, alam6, alam7, r5, r6, r7)
+        sa1, a2, b2, c2 = self.quad_func(alam5, alam6, alam7, r5, r6, r7)
         ajx1 = a2 * asol
         ajx2 = b2 * coef3
         ajx3 = c2 * coef4
@@ -490,7 +503,9 @@ class Sice2Algo:
         BBA_nir = (aj2 + aj3) / sol2  # here segment 2.1 and 2.2 are summed
         BBA_sw = (aj1 + aj2 + aj3) / sol3_pol
 
-    def quad_func(x0, x1, x2, y0, y1, y2):
+        return BBA_vis, BBA_nir, BBA_sw
+
+    def quad_func(self, x0, x1, x2, y0, y1, y2):
         # quadratic function used for the polluted snow BBA calculation
         # see BBA_calc_pol
         # compatible with arrays
