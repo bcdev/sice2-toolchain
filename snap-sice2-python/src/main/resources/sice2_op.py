@@ -8,12 +8,10 @@ import os
 import time
 import numpy as np
 from numpy import genfromtxt
-import matplotlib.pyplot as plt
 import rasterio as rio
 
 import snappy
 from snappy import ProductIO
-from snappy import FlagCoding
 
 # If a Java type is needed which is not imported by snappy by default it can be retrieved manually.
 # First import jpy
@@ -110,11 +108,17 @@ class Sice2Op:
         oza_data[np.isnan(rtoa_data[0, :, :])] = np.nan
         oaa_data[np.isnan(rtoa_data[0, :, :])] = np.nan
 
-        water_vod = genfromtxt(resource_root + os.sep + 'auxdata' + os.sep + 'tg_water_vod.dat', delimiter='   ')
-        self.voda = water_vod[range(sice2_constants.OLCI_NUM_SPECTRAL_BANDS), 1]
+        # not needed?!
+        # water_vod = genfromtxt(resource_root + os.sep + 'auxdata' + os.sep + 'tg_water_vod.dat', delimiter='   ')
+        # self.voda = water_vod[range(sice2_constants.OLCI_NUM_SPECTRAL_BANDS), 1]
 
-        ozone_vod = genfromtxt(resource_root + os.sep + 'auxdata' + os.sep + 'tg_vod.dat', delimiter='   ')
-        self.tozon = ozone_vod[range(sice2_constants.OLCI_NUM_SPECTRAL_BANDS), 1]
+        # todo: auxdata file is not found in Linux environment:
+        # Value: /home/olafd/.snap/system/modules/org-esa-snap-sice2-snap-sice2-python.jar/auxdata/tg_vod.dat not found.
+        # --> check and fix!
+
+        # ozone_vod = genfromtxt(resource_root + os.sep + 'auxdata' + os.sep + 'tg_vod.dat', delimiter='   ')
+        # self.tozon = ozone_vod[range(sice2_constants.OLCI_NUM_SPECTRAL_BANDS), 1]
+        self.tozon = sice2_constants.tg_vod
 
         # As it is always a good idea to separate responsibilities the algorithmic methods are put
         # into an other class

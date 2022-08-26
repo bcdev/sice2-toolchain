@@ -98,7 +98,7 @@ tg_vod = np.array((
     6.715773241E-004,
     3.127781417E-004,
     1.408798425E-005
-)).astype('float32')
+)).astype('float64')
 
 tg_water_vod = np.array((
     3.506319806E-005,
@@ -122,7 +122,7 @@ tg_water_vod = np.array((
     3.265557172E-001,
     2.804599956E+000,
     2.858762309E-003
-)).astype('float32')
+)).astype('float64')
 
 
 # %% Solar flux

@@ -122,15 +122,15 @@ class Sice2Algo:
         alpha2 = 4. * np.pi * akap2 / 1.020
         eps = 1.549559365010611
 
-        print('rtoa[16, 350,800]: ' + str(toa[16, 350,800]))
-        print('rtoa[20, 350,800]: ' + str(toa[16, 350,800]))
-        print('ak1[500,500]: ' + str(ak1[500,500]))
-        print('ak2[500,500]: ' + str(ak2[500,500]))
+        #print('rtoa[16, 350,800]: ' + str(toa[16, 350,800]))
+        #print('rtoa[20, 350,800]: ' + str(toa[16, 350,800]))
+        #print('ak1[500,500]: ' + str(ak1[500,500]))
+        #print('ak2[500,500]: ' + str(ak2[500,500]))
         # reflectivity of nonabsorbing snow layer
         rr1 = toa[16, :, :]
         rr2 = toa[20, :, :]
         r0 = (rr1 ** eps) * (rr2 ** (1. - eps))
-        print('r0[350,800]: ' + str(r0[350,800]))
+        #print('r0[350,800]: ' + str(r0[350,800]))
 
         # effective absorption length(mm)
         bal = np.log(rr2 / r0) * np.log(rr2 / r0) / alpha2 / (ak1 * ak2 / r0) ** 2
