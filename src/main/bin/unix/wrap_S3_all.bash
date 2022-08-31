@@ -18,9 +18,14 @@ log_warn() { echo -e "${orange}[$(date --iso-8601=seconds)] [WARN] ${*}${nc}"; }
 log_err() { echo -e "${red}[$(date --iso-8601=seconds)] [ERR] ${*}${nc}" 1>&2; }
 
 # wvcci-vm
+l1_root=${SICE2_ROOT}/olci_slstr_l1
 preprocessed_root=${SICE2_ROOT}/olci_slstr_preprocessed
 mosaic_root=${SICE2_ROOT}/olci_slstr_mosaics
 sice_results_root=${SICE2_ROOT}/olci_slstr_sice_results
+
+log_info "preprocessed_root: ${preprocessed_root}"
+log_info "mosaic_root: ${mosaic_root}"
+log_info "sice_results_root: ${sice_results_root}"
 
 # Slope correction
 slopey=false 
@@ -50,8 +55,8 @@ for year in {2021..2021}; do
       # SNAP: Reproject, calculate reflectance, extract bands, etc.
       # e.g. ./S3_proc.sh -i ./olci_slstr_l1/2021/08/01 -o ./olci_slstr_preprocessed/2021-08-01 -X ./S3.xml || error=true
       conda activate base
-      echo "./S3_proc.sh -i ${SEN3_local}/${year}/${month}/${day} -o ${preprocessed_root}/${thedate} -X ${xml_file} -t || error=true"
-      ./S3_proc.sh -i ${SEN3_local}/${year}/${month}/${day} -o ${preprocessed_root}/${thedate} -X ${xml_file} -t || error=true
+      echo "./S3_proc.sh -i ${l1_root}/${year}/${month}/${day} -o ${preprocessed_root}/${thedate} -X ${xml_file} -t || error=true"
+      ./S3_proc.sh -i ${l1_root}/${year}/${month}/${day} -o ${preprocessed_root}/${thedate} -X ${xml_file} -t || error=true
 
       # Run the Simple Cloud Detection Algorithm (SCDA)
       # Works with SICE env only
@@ -91,3 +96,5 @@ for year in {2021..2021}; do
     done
   done 
 done
+
+echo "Successfully finished SICE2 processing chain."
