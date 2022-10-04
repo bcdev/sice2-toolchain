@@ -7,6 +7,9 @@ This script contains the constants needed by the pySICEv1.1 library.
 """
 
 import numpy as np
+import os
+
+SNAPPY_DIR = os.path.expanduser('~') + os.sep + '.snap' + os.sep + 'snap-python'
 
 OLCI_NUM_SPECTRAL_BANDS = 21
 
