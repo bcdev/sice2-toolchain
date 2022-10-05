@@ -6,6 +6,7 @@ import sys
 import os
 import numpy
 # import snappy
+sys.path.append(sice2_constants.SNAPPY_DIR)
 import snappy_esa
 # from snappy import FlagCoding
 from snappy_esa import FlagCoding
