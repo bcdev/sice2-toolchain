@@ -29,7 +29,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <snap.version>8.0.5</snap.version>
+<!--        <snap.version>8.0.5</snap.version>-->
+        <snap.version>9.0.0</snap.version>
     </properties>
 
     <dependencies>

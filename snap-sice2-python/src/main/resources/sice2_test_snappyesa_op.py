@@ -1,16 +1,15 @@
-# import sice2_test_algo
-# import sice2_constants
+import sice2_test_algo
+import sice2_constants
 import platform
 import tempfile
 import sys
 import os
 import numpy
 # import snappy
-# sys.path.append(sice2_constants.SNAPPY_DIR)
-sys.path.append(os.path.expanduser('~') + os.sep + '.snap' + os.sep + 'snap-python')
-import snappy
+sys.path.append(sice2_constants.SNAPPY_DIR)
+import snappy_esa
 # from snappy import FlagCoding
-from snappy import FlagCoding
+from snappy_esa import FlagCoding
 
 NDVI_HIGH_THRESHOLD = 0.8
 NDVI_LOW_THRESHOLD = -0.5
@@ -18,16 +17,16 @@ NDVI_LOW_THRESHOLD = -0.5
 # If a Java type is needed which is not imported by snappy by default it can be retrieved manually.
 # First import jpy
 # from snappy import jpy
-from snappy import jpy
+from snappy_esa import jpy
 
 # and then import the type
 Float = jpy.get_type('java.lang.Float')
 Color = jpy.get_type('java.awt.Color')
 
-# import xarray as xr
+import xarray as xr
 
 
-class Sice2TestOp:
+class Sice2TestSnappyesaOp:
     """
     TEST operator - does an NDVI only (from SNAP examples)
     """
@@ -45,6 +44,7 @@ class Sice2TestOp:
         f = open(tempfile.gettempdir() + '/sice2_py.log', 'w')
 
         sys.path.append(resource_root)
+        sys.path.append(sice2_constants.SNAPPY_DIR)
 
         f.write('Python module location: ' + __file__ + '\n')
         f.write('Python module location parent: ' + resource_root + '\n')
@@ -74,30 +74,30 @@ class Sice2TestOp:
 
         # As it is always a good idea to separate responsibilities the algorithmic methods are put
         # into an other class
-        # self.sice2algo = sice2_test_algo.Sice2TestAlgo(NDVI_LOW_THRESHOLD, NDVI_HIGH_THRESHOLD)
+        self.sice2algo = sice2_test_algo.Sice2TestAlgo(NDVI_LOW_THRESHOLD, NDVI_HIGH_THRESHOLD)
 
         # Create the target product
         # ndvi_product = snappy.Product('py_NDVI', 'py_NDVI', width, height)
-        ndvi_product = snappy.Product('py_NDVI', 'py_NDVI', width, height)
+        ndvi_product = snappy_esa.Product('py_NDVI', 'py_NDVI', width, height)
         # ProductUtils provides several useful helper methods to build the target product.
         # In most cases it is sufficient to copy the information from the source to the target.
         # That's why mainly copy methods exist like copyBand(...), copyGeoCoding(...), copyMetadata(...)
         # snappy.ProductUtils.copyGeoCoding(source_product, ndvi_product)
-        snappy.ProductUtils.copyGeoCoding(source_product, ndvi_product)
+        snappy_esa.ProductUtils.copyGeoCoding(source_product, ndvi_product)
         # snappy.ProductUtils.copyMetadata(source_product, ndvi_product)
-        snappy.ProductUtils.copyMetadata(source_product, ndvi_product)
+        snappy_esa.ProductUtils.copyMetadata(source_product, ndvi_product)
         # For copying the time information no helper method exists yet, but will come in SNAP 5.0
         ndvi_product.setStartTime(source_product.getStartTime())
         ndvi_product.setEndTime(source_product.getEndTime())
 
         # Adding new bands to the target product is straight forward.
         # self.ndvi_band = ndvi_product.addBand('ndvi', snappy.ProductData.TYPE_FLOAT32)
-        self.ndvi_band = ndvi_product.addBand('ndvi', snappy.ProductData.TYPE_FLOAT32)
+        self.ndvi_band = ndvi_product.addBand('ndvi', snappy_esa.ProductData.TYPE_FLOAT32)
         self.ndvi_band.setDescription('The Normalized Difference Vegetation Index')
         self.ndvi_band.setNoDataValue(Float.NaN)
         self.ndvi_band.setNoDataValueUsed(True)
         # self.ndvi_flags_band = ndvi_product.addBand('ndvi_flags', snappy.ProductData.TYPE_UINT8)
-        self.ndvi_flags_band = ndvi_product.addBand('ndvi_flags', snappy.ProductData.TYPE_UINT8)
+        self.ndvi_flags_band = ndvi_product.addBand('ndvi_flags', snappy_esa.ProductData.TYPE_UINT8)
         self.ndvi_flags_band.setDescription('The flag information')
 
         # Create a flagCoding for the flag band. This helps to display the information properly within SNAP.
@@ -139,20 +139,20 @@ class Sice2TestOp:
         # Values at specific pixel locations can be retrieved for example by lower_tile.getSampleFloat(x, y)
 
         # Convert the data into numpy data. It is easier and faster to work with as if you use plain python arithmetic
-        # lower_data = numpy.array(lower_samples, dtype=numpy.float32) * self.lower_factor
-        # upper_data = numpy.array(upper_samples, dtype=numpy.float32) * self.upper_factor
+        lower_data = numpy.array(lower_samples, dtype=numpy.float32) * self.lower_factor
+        upper_data = numpy.array(upper_samples, dtype=numpy.float32) * self.upper_factor
 
         # Doing the actual computation
-        # ndvi = self.sice2algo.compute_ndvi(lower_data, upper_data)
-        # ndvi_flags = self.sice2algo.compute_flags(ndvi)
+        ndvi = self.sice2algo.compute_ndvi(lower_data, upper_data)
+        ndvi_flags = self.sice2algo.compute_flags(ndvi)
 
         # The target tile which shall be filled with data are provided as parameter to this method
-        # ndvi_tile = target_tiles.get(self.ndvi_band)
-        # ndvi_flags_tile = target_tiles.get(self.ndvi_flags_band)
+        ndvi_tile = target_tiles.get(self.ndvi_band)
+        ndvi_flags_tile = target_tiles.get(self.ndvi_flags_band)
 
         # Set the result to the target tiles
-        # ndvi_tile.setSamples(ndvi)
-        # ndvi_flags_tile.setSamples(ndvi_flags)
+        ndvi_tile.setSamples(ndvi)
+        ndvi_flags_tile.setSamples(ndvi_flags)
 
     def dispose(self, operator):
         """

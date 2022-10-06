@@ -1,15 +1,33 @@
 1. rebuild snap-python module with given renamings:
 - PyBridge: l.81: changed SNAPPY_NAME to 'snappy_esa'
 - setup.py: l.1: changed SNAPPY_NAME to 'snappy_esa'
-- added jpy wheel for Python 3.7 (only Win64 yet). TODO: generate further wheels for Linux and for 3.8, 3.9.
-2. snappy-config.bat </path/to/python.exe>. Python MUST currently be 3.7 (max for jpy, min for xarray)
+- renamed ./src/main/resources/snappy to ./src/main/resources/snappy_esa
+- added jpy wheels for Python 3.7-3.9 (Win64 and Linux).
+2. snappy-config.bat </path/to/python.exe>. Python be in [3.7, 3.9] (3.9 max for jpy, 3.7 min for xarray)
+--> this now generates <homedir>\.snap\snap-python\snappy_esa
 3. set SNAP_HOME to D:\olaf\bc\snap-snapshots\9\9.0-release\snap (not sure if this is really needed, tbc)
-4. rename C:\Users\olafd\.snap\snap-python\snappy to C:\Users\olafd\.snap\snap-python\snappy_esa
-5. in jpyconfig.properties, rename 'snappy' to 'snappy_esa' accordingly (lines 3, 4)
-(probably, snappy_dir in snappyutil.py needs to be changed to do this automatically. Maybe in whole snap-python module rename everything from 'snappy' to 'snappyesa'?)
-6. Then, in snappy_esa dir, call your Python 3.7, e.g. D:\olaf\Anaconda3\python.exe. This should work:
+[4. rename C:\Users\olafd\.snap\snap-python\snappy to C:\Users\olafd\.snap\snap-python\snappy_esa] NO LONGER NEEDED
+[5. in jpyconfig.properties, rename 'snappy' to 'snappy_esa' accordingly (lines 3, 4)
+(probably, snappy_dir in snappyutil.py needs to be changed to do this automatically.
+Maybe in whole snap-python module rename everything from 'snappy' to 'snappyesa'?)] NO LONGER NEEDED
+6. Then call your Python >= 3.7, e.g. D:\olaf\Anaconda3\python.exe. This should work now:
 >>> import sys
 >>> sys.path.append('C:\\Users\\olafd\\.snap\\snap-python')
 >>> import snappy_esa
 >>> import xarray
-7. in the same way, in a snappy Op (e.g. py_sice2_test_op), make sure that sys.path.append('C:\\Users\\olafd\\.snap\\snap-python') is called before import snappy_esa
+7. in the same way, in a snappy Op (e.g. py_sice2_test_snappyesa_op),
+make sure that sys.path.append('C:\\Users\\olafd\\.snap\\snap-python') is called before import snappy_esa
+
+8. maybe you have to
+- add to path: <python home dir>, e.g. D:\olaf\Anaconda3
+- add PYTHONHOME: <python home dir>, e.g. D:\olaf\Anaconda3
+- add PYTHONPATH: <python home dir>, e.g. D:\olaf\Anaconda3
+to avoid
+ModuleNotFoundError: No module named 'encodings'
+
+9. in Idea, maybe you have to
+- find out os environment path via
+## import os
+## os.environ['PATH']
+- add this path to the environment variable PATH in 'Environment variables' in Idea configuration for JAR application
+(see https://stackoverflow.com/questions/54063285/numpy-is-already-installed-with-anaconda-but-i-get-an-importerror-dll-load-fail)

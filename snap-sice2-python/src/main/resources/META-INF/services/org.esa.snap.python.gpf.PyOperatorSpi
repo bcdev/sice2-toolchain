@@ -8,5 +8,6 @@
 # land.ndvi.NdviOp
 # land_ops.FaparOp
 #
+sice2_test_snappyesa_op.Sice2TestSnappyesaOp
 sice2_test_op.Sice2TestOp
 sice2_op.Sice2Op
