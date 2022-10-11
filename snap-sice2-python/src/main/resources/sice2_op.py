@@ -65,7 +65,16 @@ class Sice2Op:
         self.tif_input_directory = context.getParameter('tifInputDir')
         self.tif_output_directory = context.getParameter('tifOutputDir')
 
-        # Via the context object the source product which shall be processed can be retrieved
+        print('Start sice.py')
+        print('Input folder:', self.tif_input_directory)
+        print('Output folder:', self.tif_output_directory)
+
+        OLCI_reader = sice2_v2_io(InputPath)
+        OLCI_reader.open()
+        OLCI_scene = OLCI_reader.olci_scene
+
+
+    # Via the context object the source product which shall be processed can be retrieved
         # source_product = context.getSourceProduct('source')
         # source_product = snappy.Product('dummy', 'dummy', 1, 1)
         # width = source_product.getSceneRasterWidth()
