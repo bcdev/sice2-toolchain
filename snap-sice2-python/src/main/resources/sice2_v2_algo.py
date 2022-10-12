@@ -280,6 +280,8 @@ class Sice2V2Algo:
         return atmosphere
 
     # @numba.jit(nopython=True, cache=True)
+    # @numba.jit(nopython=True)
+    @numba.jit
     def prepare_coef_xarray(self, tau, g, p, cos_sza, cos_vza, inv_cos_za, gaer, taumol, tauaer):
         # atmospheric reflectance
         b1 = 1.0 + 1.5 * cos_sza + (1.0 - 1.5 * cos_sza) * np.exp(-tau / cos_sza)
@@ -389,7 +391,9 @@ class Sice2V2Algo:
         snow["isnow"] = snow["isnow"].where(ind_no_nan)
         return olci_scene, snow
 
-    @numba.jit(nopython=True, cache=True)
+    # @numba.jit(nopython=True, cache=True)
+    # @numba.jit(nopython=True)
+    @numba.jit
     def f(self, albedo, t1t2, r0, u1, u2, albatm, r, toa):
         surf = t1t2 * r0 * albedo ** (u1 * u2 / r0) / (1 - albedo * albatm)
         rs = r + surf
@@ -660,7 +664,9 @@ class Sice2V2Algo:
         print("Max iteration reached")
         return s
 
-    @numba.jit(nopython=True, cache=True)
+    # @numba.jit(nopython=True, cache=True)
+    # @numba.jit(nopython=True)
+    @numba.jit
     def BBA_calc_pol(self, alb, asol, sol_vis, sol_nir, sol_sw):
         # polluted snow
         # NEW CODE FOR BBA OF BARE ICE
@@ -733,7 +739,8 @@ class Sice2V2Algo:
 
         return BBA_vis, BBA_nir, BBA_sw
 
-    @numba.jit(nopython=True, cache=True)
+    # @numba.jit(nopython=True, cache=True)
+    @numba.jit(nopython=True)
     def analyt_func(self, z1, z2):
         # analystical integration of the solar flux
         # see BBA_calc_pol
@@ -756,7 +763,8 @@ class Sice2V2Algo:
 
         return (f0 * ak1 - f1 * ak2 - f2 * ak3), (f0 * am1 - f1 * am2 - f2 * am3)
 
-    @numba.jit(nopython=True, cache=True)
+    # @numba.jit(nopython=True, cache=True)
+    @numba.jit(nopython=True)
     def quad_func(self, x0, x1, x2, y0, y1, y2):
         # quadratic function used for the polluted snow BBA calculation
         # see BBA_calc_pol
@@ -771,7 +779,9 @@ class Sice2V2Algo:
         sa = a1 + b1 * x1 + c1 * x1 * x1
         return sa, a1, b1, c1
 
-    @numba.jit(nopython=True, cache=True)
+    # @numba.jit(nopython=True, cache=True)
+    # @numba.jit(nopython=True)
+    @numba.jit
     def zbrent(self, x0, x1, args=(), max_iter=100, tolerance=1e-12):
         # Equation solver using Brent's method
         # https://en.wikipedia.org/wiki/Brent%27s_method

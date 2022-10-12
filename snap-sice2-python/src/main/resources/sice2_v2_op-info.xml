@@ -4,9 +4,9 @@
 -->
 <operator>
     <!-- The name uniquely identifies the operator within SNAP -->
-    <name>org.esa.snap.sice2.Sice2Op</name>
+    <name>org.esa.snap.sice2.Sice2V2Op</name>
     <!-- The alias is a more user-friendly name, e.g. to be used on the command line -->
-    <alias>py_sice2_op</alias>
+    <alias>py_sice2_v2_op</alias>
     <operatorClass>org.esa.snap.python.gpf.PyOperator</operatorClass>
 
     <version>0.1</version>
