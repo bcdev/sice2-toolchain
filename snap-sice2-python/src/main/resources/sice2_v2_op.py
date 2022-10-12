@@ -1,7 +1,6 @@
 import datetime
 
-# import sice2_v2_algo
-import sice2_v2_algo2
+import sice2_v2_algo
 import sice2_v2_io
 
 import platform
@@ -77,18 +76,14 @@ class Sice2V2Op:
         olci_reader.open()
         olci_scene = olci_reader.olci_scene
 
-        # olci_processor = sice2_v2_algo.Sice2V2Algo()
-
         start_time = time.process_time()
 
         if len(olci_scene.xy) < 1000000:
             # snow = process(olci_scene)
-            # snow = olci_processor.process(olci_scene)
-            snow = sice2_v2_algo2.process(olci_scene)
+            snow = sice2_v2_algo.process(olci_scene)
         else:
             # snow = process_by_chunk(olci_scene, chunk_size=500000)
-            # snow = olci_processor.process_by_chunk(olci_scene, chunk_size=500000)
-            snow = sice2_v2_algo2.process_by_chunk(olci_scene, chunk_size=500000)
+            snow = sice2_v2_algo.process_by_chunk(olci_scene, chunk_size=500000)
 
         duration = time.process_time() - start_time
         print("Time elapsed: ", duration)
