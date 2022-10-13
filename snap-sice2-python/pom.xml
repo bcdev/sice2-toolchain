@@ -71,6 +71,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.esa.snap</groupId>
+            <artifactId>snap-python</artifactId>
+            <version>9.0.2-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.esa.s3tbx</groupId>
             <artifactId>s3tbx-olci-radiometry</artifactId>
             <version>${snap.version}</version>
