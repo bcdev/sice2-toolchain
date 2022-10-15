@@ -19,7 +19,11 @@ import rasterio as rio
 
 class SiceV2Io(object):
     def __init__(self, dirname):
+        """
+        SiceV2Io initialize
 
+        :param dirname: input directory name (tif, zarr or SEN3 folder)
+        """
         self.dirname = dirname
 
         if dirname.endswith(".zarr"):
@@ -35,14 +39,34 @@ class SiceV2Io(object):
             self.open = self.open_tif
 
     def _open_tif(self, filename):
+        """
+        Opens tif file
+
+        :param filename:
+        :return: rio object
+        """
         return rio.open(os.path.join(self.dirname, filename))
 
     def _get_size_tif(self):
+        """
+        Extracts size of tif file
+
+        :return:
+        """
         self.meta = self._open_tif("r_TOA_01.tif").meta
         self.original_width = self.meta["width"]
         self.original_height = self.meta["height"]
 
     def open_tif(self, x0=0, y0=0, width=None, height=None):
+        """
+        Opens tif file.
+
+        :param x0:
+        :param y0:
+        :param width:
+        :param height:
+        :return:
+        """
 
         # if os.path.isfile(self.dirname):
         #     raise NotImplementedError("this part needs to be cleaned")
@@ -122,12 +146,26 @@ class SiceV2Io(object):
         self.meta["height"] = len(t.y)
 
     def _get_size_satpy(self):
+        """
+        Extracts size of OLCI L1b SEN3 file
+
+        :return:
+        """
         filename = os.path.join(self.dirname, "Oa01_radiance.nc")
         rootgrp = netCDF4.Dataset(filename, "r")
         self.original_width = rootgrp.dimensions["columns"].size
         self.original_height = rootgrp.dimensions["rows"].size
 
     def open_satpy(self, x0=0, y0=0, width=None, height=None):
+        """
+        Opens OLCI L1b SEN3 file.
+
+        :param x0:
+        :param y0:
+        :param width:
+        :param height:
+        :return:
+        """
         import satpy  # this is not good practice but avoid satpy to be a compulsary dependence
 
         filenames = glob(os.path.join(self.dirname, "*.nc"))
@@ -183,11 +221,25 @@ class SiceV2Io(object):
         scene.unload()  # probably useless
 
     def _get_size_zarr(self):
+        """
+        Extracts size of zarr file
+
+        :return:
+        """
         ds = xr.open_zarr(self.dirname)
         self.original_width = len(ds.x)
         self.original_height = len(ds.y)
 
     def open_zarr(self, x0=0, y0=0, width=None, height=None):
+        """
+        Opens zarr file.
+
+        :param x0:
+        :param y0:
+        :param width:
+        :param height:
+        :return:
+        """
 
         variables = {
             "solar_azimuth_angle": "saa",
@@ -221,106 +273,15 @@ class SiceV2Io(object):
             self.toa.append(get_var(band))
         self.toa = xr.concat(self.toa, dim="band")
 
-    # def to_geotif(self, extended_output=False, save_spectral=False):
-    #     def write_output(var, var_name, in_folder, meta):
-    #         # this functions write tif files based on a model file, here "Oa01"
-    #         # opens a file for writing
-    #         var = var.unstack(dim="xy").transpose("y", "x")
-    #         var.rio.to_raster(os.path.join(in_folder, var_name + ".tif"))
-    #         # with rio.open(os.path.join(in_folder, var_name + '.tif'), 'w+', **meta) as dst:
-    #         #     dst.write(var.astype('float32'), 1)
-    #
-    #     # write_output(self.D, 'grain_diameter',self.dirname)
-    #     write_output(
-    #         6 / 0.917 / self.diameter, "snow_specific_area", self.dirname, self.meta
-    #     )
-    #     write_output(self.rp3, "albedo_bb_planar_sw", self.dirname, self.meta)
-    #     write_output(self.rs3, "albedo_bb_spherical_sw", self.dirname, self.meta)
-    #     # write_output(self.longitude, 'longitude', self.dirname, self.meta)
-    #     # write_output(self.latitude, 'latitude', self.dirname, self.meta)
-    #     if isinstance(self.isnow, np.ndarray):
-    #         self.isnow = xr.DataArray(self.isnow, coords=self.sza.coords)
-    #     write_output(self.isnow, "diagnostic_retrieval", self.dirname, self.meta)
-    #
-    #     if extended_output:
-    #         write_output(self.al, "al", self.dirname, self.meta)
-    #         write_output(self.r0, "r0", self.dirname, self.meta)
-    #         if hasattr(conc):
-    #             write_output(self.conc, "conc", self.dirname, self.meta)
-    #         else:
-    #             print("no conc")
-    #
-    #     if save_spectral:
-    #         # for i in np.arange(21):
-    #         for b in np.append(np.arange(11), np.arange(15, 21)):
-    #             write_output(
-    #                 self.alb_sph.sel(band=b),
-    #                 f"albedo_spectral_spherical_{b+1:02}",
-    #                 self.dirname,
-    #                 self.meta,
-    #             )
-    #             write_output(
-    #                 self.rp.sel(band=b),
-    #                 f"albedo_spectral_planar_{b+1:02}",
-    #                 self.dirname,
-    #                 self.meta,
-    #             )
-    #             write_output(
-    #                 self.refl.sel(band=b), f"rBRR_{b+1:02}", self.dirname, self.meta
-    #             )
-
-    # def to_zarr(self, append_dim=None):
-    #     ds = xr.Dataset(
-    #         {
-    #             "snow_specific_area": 6 / 0.917 / self.diameter.unstack(dim="xy"),
-    #             "albedo_bb_planar_sw": self.rp3.unstack(dim="xy"),
-    #             "albedo_bb_spherical_sw": self.rs3.unstack(dim="xy"),
-    #         }
-    #     )
-    #
-    #     if append_dim:
-    #         mode = "a"
-    #         encodings = None
-    #     else:
-    #         mode = "w"
-    #         encodings = {v: {"dtype": "float32"} for v in ds.variables}
-    #
-    #     output_path = self.dirname
-    #     if output_path.endswith(".zarr"):
-    #         output_path, _ = os.path.splitext(output_path)
-    #     if output_path.endswith(".SEN3"):
-    #         output_path, _ = os.path.splitext(output_path)
-    #     ds.to_zarr(
-    #         output_path + ".OUT.zarr",
-    #         mode=mode,
-    #         append_dim=append_dim,
-    #         encoding=encodings,
-    #         consolidated=True,
-    #         )
-
-    # def to_csv(self):
-    #     # %% Output
-    #     print('\nText file output')
-    #     # data_in = pd.read_csv(sys.argv[1])
-    #     data_out = data_in
-    #     data_out['grain_diameter'] = self.diameter
-    #     # data_out['snow_specific_area']=area
-    #     data_out['al'] = self.al
-    #     data_out['r0'] = self.r0
-    #     data_out['diagnostic_retrieval'] = self.isnow
-    #     data_out['conc'] = self.conc
-    #     data_out['albedo_bb_planar_sw'] = self.rp3
-    #     data_out['albedo_bb_spherical_sw'] = self.rs3
-    #     for i in np.append(np.arange(11), np.arange(15,21)):
-    #     # for i in np.arange(21):
-    #         data_out['albedo_spectral_spherical_' + str(i + 1).zfill(2)] = self.alb_sph[i,:,:]
-    #     for i in np.append(np.arange(11), np.arange(15,21)):
-    #         data_out['rBRR_'+str(i+1).zfill(2)] = self.rp[i,:,:]
-    #     basename, ext = os.path.splitext(self.filename)
-    #        data_out.to_csv(basename + '_out.csv')
-
 
     def write_output(self, snow, output_folder):
+        """
+        Write snow retrievals to tif files (one file per variable)
+
+        :param snow: xarray Dataset with snow retrievals
+        :param output_folder: output folder with tif files
+        :return:
+        """
         file_name_list = {
             "BXXX": "O3_SICE",
             "diameter": "grain_diameter",
