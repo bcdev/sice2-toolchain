@@ -7,7 +7,7 @@
     <name>org.esa.snap.sice2.Sice2V2Op</name>
     <!-- The alias is a more user-friendly name, e.g. to be used on the command line -->
     <alias>py_sice2_v2_op</alias>
-    <operatorClass>org.esa.snap.python.gpf.PyOperator</operatorClass>
+    <operatorClass>org.esa.snap.snappy.gpf.PyOperator</operatorClass>
 
     <version>0.1</version>
     <authors>Brockmann Consult GmbH</authors>

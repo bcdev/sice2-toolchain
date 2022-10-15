@@ -14,12 +14,12 @@ import time
 
 import xarray as xr
 
-import snappy_esa
-from snappy_esa import ProductIO
+import esa_snappy
+from esa_snappy import ProductIO
 
 # If a Java type is needed which is not imported by snappy by default it can be retrieved manually.
 # First import jpy
-from snappy_esa import jpy
+from esa_snappy import jpy
 
 # and then import the type
 import sice2_constants
@@ -92,7 +92,7 @@ class Sice2V2Op:
 
         # Create the target product
         # todo: we do not want a target product for the moment. Check how 'autoWriteDisabled' works with snappy
-        snow_product = snappy_esa.Product('py_SNOW', 'py_SNOW', 1, 1)  # dummy
+        snow_product = esa_snappy.Product('py_SNOW', 'py_SNOW', 1, 1)  # dummy
         context.setTargetProduct(snow_product)
         f.write('end initialize.')
         print('end initialize.')
