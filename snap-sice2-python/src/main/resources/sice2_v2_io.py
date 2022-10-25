@@ -11,7 +11,7 @@ tip list:
 import os
 from glob import glob
 import xarray as xr
-import netCDF4
+# import netCDF4
 import numpy as np
 import rioxarray
 import rasterio as rio

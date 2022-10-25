@@ -1,4 +1,10 @@
 import numpy
+import os
+from glob import glob
+import xarray as xr
+# import netCDF4   # this causes DLL issues with Py3.9
+# import rioxarray  # this causes DLL issues with Py3.9
+import pandas as pd
 
 
 class Sice2TestAlgo:
@@ -6,6 +12,8 @@ class Sice2TestAlgo:
     def __init__(self, low_threshold, high_threshold):
         self.low_threshold = low_threshold
         self.high_threshold = high_threshold
+
+        olci_scene = xr.Dataset()
 
     def compute_ndvi(self, lower_data, upper_data):
         ndvi = (upper_data - lower_data) / (upper_data + lower_data)

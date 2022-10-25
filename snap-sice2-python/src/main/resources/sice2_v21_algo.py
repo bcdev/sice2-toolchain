@@ -103,6 +103,21 @@ from sice2_v21_constants_optim import sol1_clean, sol2, sol3_clean, sol1_pol, so
 os.environ['PYTROLL_CHUNK_SIZE'] = '256'
 
 
+# def process_OLD(OLCI_scene, compute_polluted=True, **kwargs):
+#     print(f"enter process...")
+#     angles = view_geometry(OLCI_scene)
+#     OLCI_scene = ozone_correction(OLCI_scene)
+#     OLCI_scene, snow = prepare_processing(OLCI_scene)
+#     aerosol = aerosol_properties(OLCI_scene.elevation, angles.cos_sa, aot=0.1)
+#     OLCI_scene, angles, snow = snow_properties(OLCI_scene, angles, snow)
+#     atmosphere = prepare_coef(aerosol, angles)
+#     OLCI_scene, snow = clean_snow_albedo(OLCI_scene, angles, aerosol, atmosphere, snow)
+#     if compute_polluted:
+#         OLCI_scene, snow, impurities = polluted_snow_albedo(OLCI_scene, angles, aerosol, atmosphere, snow)
+#     snow = compute_plane_albedo(OLCI_scene, snow, angles, compute_polluted=compute_polluted)
+#
+#     return snow
+
 def process(OLCI_scene, compute_polluted=True, **kwargs):
     print(f"enter process...")
     angles = view_geometry(OLCI_scene)
@@ -111,12 +126,50 @@ def process(OLCI_scene, compute_polluted=True, **kwargs):
     aerosol = aerosol_properties(OLCI_scene.elevation, angles.cos_sa, aot=0.1)
     OLCI_scene, angles, snow = snow_properties(OLCI_scene, angles, snow)
     atmosphere = prepare_coef(aerosol, angles)
-    OLCI_scene, snow = clean_snow_albedo(OLCI_scene, angles, aerosol, atmosphere, snow)
-    if compute_polluted:
-        OLCI_scene, snow, impurities = polluted_snow_albedo(OLCI_scene, angles, aerosol, atmosphere, snow)
-    snow = compute_plane_albedo(OLCI_scene, snow, angles, compute_polluted=compute_polluted)
+
+    # check if we found snow in given full scene or chunk
+    # (using snow type (snow.isnow) as identifier)
+    # If yes, retrieve albedos and impurities :
+    isnow_indices = np.where(snow.isnow.notnull())[0]
+    # if len(isnow_indices) > 0:
+    if len(isnow_indices) >= -100:
+        OLCI_scene, snow = clean_snow_albedo(OLCI_scene, angles, aerosol, atmosphere, snow)
+        if compute_polluted:
+            OLCI_scene, snow, impurities = polluted_snow_albedo(OLCI_scene, angles, aerosol, atmosphere, snow)
+        snow = compute_plane_albedo(OLCI_scene, snow, angles, compute_polluted=compute_polluted)
+    else:
+        # no snow found in given full scene or chunk:
+        # reset snow xarray Dataset to nan
+        reset_snow_xr_dataset_to_nan(OLCI_scene, snow)
 
     return snow
+#
+#
+# def process_by_chunk_OLD(OLCI_scene, chunk_size=150000, compute_polluted=True):
+#     size = OLCI_scene.sza.shape[0]
+#     nchunks = int(max(np.floor(size / chunk_size), 1))
+#     OLCI_chunks = OLCI_scene.chunk({"band": 21, "xy": chunk_size})
+#     # snow_chunks = OLCI_chunks.map_blocks(process,kwargs={}, template = snow_template)
+#     xy_chunk_indexes = np.array(OLCI_chunks.chunks["xy"]).cumsum()
+#
+#     snow = xr.Dataset()
+#
+#     for i in range(len(xy_chunk_indexes) - 1):
+#         print(f"{i+1} / {nchunks}")
+#         # define chunk
+#         print(f"bla")
+#         chunk = OLCI_scene.isel(xy=slice(xy_chunk_indexes[i], xy_chunk_indexes[i + 1]))
+#         print(f"blubb")
+#         # process chunk
+#         snow_chunk = process(chunk)
+#
+#         if i == 0:
+#             snow = snow_chunk.copy()
+#         else:
+#             snow = xr.concat([snow, snow_chunk], dim="xy")
+#         del snow_chunk
+#
+#     return snow
 
 
 def process_by_chunk(OLCI_scene, chunk_size=150000, compute_polluted=True):
@@ -128,22 +181,65 @@ def process_by_chunk(OLCI_scene, chunk_size=150000, compute_polluted=True):
 
     snow = xr.Dataset()
 
-    for i in range(len(xy_chunk_indexes) - 1):
-        print(f"{i+1} / {nchunks}")
-        # define chunk
-        print(f"bla")
-        chunk = OLCI_scene.isel(xy=slice(xy_chunk_indexes[i], xy_chunk_indexes[i + 1]))
-        print(f"blubb")
-        # process chunk
-        snow_chunk = process(chunk)
+    # for i in range(len(xy_chunk_indexes) - 1):
+    #     print(f"{i+1} / {nchunks}")
+    #     # define chunk
+    #     print(f"bla")
+    #     chunk = OLCI_scene.isel(xy=slice(xy_chunk_indexes[i], xy_chunk_indexes[i + 1]))
+    #     print(f"blubb")
+    #     # process chunk
+    #     snow_chunk = process(chunk)
+    #
+    #     if i == 0:
+    #         snow = snow_chunk.copy()
+    #     else:
+    #         snow = xr.concat([snow, snow_chunk], dim="xy")
+    #     del snow_chunk
 
+    # Replaced with this (OD, 20221012):
+    # This does not work for the mosaic example, fails in snow_albedo_solved
+    # because snow.r0 is null for whole chunk. todo: clarify with bav
+    for i in range(len(xy_chunk_indexes)):
+        print(f"{i} / {nchunks}")
         if i == 0:
+            # define chunk
+            chunk = OLCI_scene.isel(xy=slice(0, xy_chunk_indexes[0]))
+            # process chunk
+            snow_chunk = process(chunk)
             snow = snow_chunk.copy()
         else:
+            # define chunk
+            chunk = OLCI_scene.isel(xy=slice(xy_chunk_indexes[i - 1], xy_chunk_indexes[i]))
+            # process chunk
+            snow_chunk = process(chunk)
             snow = xr.concat([snow, snow_chunk], dim="xy")
         del snow_chunk
 
     return snow
+
+
+def reset_snow_xr_dataset_to_nan(OLCI_scene, snow):
+    snow["alb_sph"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["rp"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["refl"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["isnow"].values = np.ones(snow.dims["xy"]) * 104
+    snow["ndsi"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["ndbi"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["diameter"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["area"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["al"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["r0"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["bal"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["rp3"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["rs3"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["alb_sph_direct"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["rp_direct"].values = np.empty(snow.dims["xy"]) * np.nan
+    snow["refl_direct"].values = np.empty(snow.dims["xy"]) * np.nan
+
+    # exception: set factor to initial value 1.0
+    snow["factor"].values = np.ones(snow.dims["xy"]) * 1.0
+
+
 
 
 def view_geometry(OLCI_scene):

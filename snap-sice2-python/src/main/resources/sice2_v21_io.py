@@ -10,14 +10,17 @@ tip list:
 
 import os
 from glob import glob
+from math import ceil
+
 import xarray as xr
-import netCDF4
+# import netCDF4
 import numpy as np
-import rioxarray
+# import rioxarray
 import pandas as pd
 
 try:
-    import rasterio as rio
+    import satpy
+    # import rasterio as rio
 except ImportError:
     rio = None  # make rasterio optional at this stage
 
@@ -31,7 +34,7 @@ class Sice2V21Io(object):
             self._get_size_zarr()
             self.open = self.open_zarr
         elif os.path.exists(os.path.join(dirname, 'Oa01_radiance.nc')):
-            self._get_size_satpy()
+            # self._get_size_satpy()
             self.open = self.open_satpy
         elif os.path.exists(os.path.join(dirname, 'r_TOA_01.tif')):
             self._get_size_tif()
@@ -81,7 +84,7 @@ class Sice2V21Io(object):
             chunks = None
             chunks = 'auto'
             # data = xr.open_rasterio(os.path.join(self.dirname, filename), chunks=chunks).squeeze(dim='band', drop=True)
-            data = rioxarray.open_rasterio(os.path.join(self.dirname, filename), chunks=chunks).squeeze(dim='band', drop=True)
+            # data = rioxarray.open_rasterio(os.path.join(self.dirname, filename), chunks=chunks).squeeze(dim='band', drop=True)
 
             if width is not None:
                 data = data.isel(x=slice(x0, x0 + width))
@@ -122,14 +125,14 @@ class Sice2V21Io(object):
         self.meta['width'] = len(t.x)
         self.meta['height'] = len(t.y)
 
-    def _get_size_satpy(self):
-        filename = os.path.join(self.dirname, 'Oa01_radiance.nc')
-        rootgrp = netCDF4.Dataset(filename, "r")
-        self.original_width = rootgrp.dimensions['columns'].size
-        self.original_height = rootgrp.dimensions['rows'].size
+    # def _get_size_satpy(self):
+    #     filename = os.path.join(self.dirname, 'Oa01_radiance.nc')
+    #     rootgrp = netCDF4.Dataset(filename, "r")
+    #     self.original_width = rootgrp.dimensions['columns'].size
+    #     self.original_height = rootgrp.dimensions['rows'].size
 
     def open_satpy(self, x0=0, y0=0, width=None, height=None, with_geom=True):
-        import satpy  # this is not good practice but avoid satpy to be a compulsary dependence
+        # import satpy  # this is not good practice but avoid satpy to be a compulsary dependence
 
         filenames = glob(os.path.join(self.dirname, "*.nc"))
 
@@ -145,6 +148,9 @@ class Sice2V21Io(object):
         }
 
         scene.load(list(variables.keys()))
+
+        width = scene.to_xarray_dataset().dims['x']
+        height = scene.to_xarray_dataset().dims['y']
 
         islice = {}
         if width is not None:
@@ -345,3 +351,16 @@ class Sice2V21Io(object):
             )
         snow.alb_sph.sel(band=0).unstack(dim="xy").transpose("y", "x").rio.to_raster(OutputFolder+'/alb_sph_01_solved.tif')
         snow.rp.sel(band=0).unstack(dim="xy").transpose("y", "x").rio.to_raster(OutputFolder+'/alb_pl_01_solved.tif')
+
+    @staticmethod
+    def check_if_tile_was_processed(width, height, tile_width, tile_height, tile_to_process, tiles_processed):
+        num_tiles_x = ceil(width/tile_width)
+        num_tiles_y = ceil(height/tile_height)
+        tiles_x = []
+        for i in range(num_tiles_x):
+            tiles_x.append((i+1)*tile_width)
+        tiles_y = []
+        for i in range(num_tiles_y):
+            tiles_y.append((i+1)*tile_height)
+
+        return tile_to_process in tiles_processed

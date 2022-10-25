@@ -4,9 +4,9 @@
 -->
 <operator>
     <!-- The name uniquely identifies the operator within SNAP -->
-    <name>org.esa.snap.sice2.Sice2V21Op</name>
+    <name>org.esa.snap.sice2.Sice2V2TifdirsOp</name>
     <!-- The alias is a more user-friendly name, e.g. to be used on the command line -->
-    <alias>py_sice2_v21_op</alias>
+    <alias>py_sice2_v21_tifdirs_op</alias>
     <operatorClass>org.esa.snap.snappy.gpf.PyOperator</operatorClass>
 
     <version>0.1</version>
@@ -20,12 +20,32 @@
              In the GUI only one is currently supported. On the command line multiple source products
              can be specified by referencing them with the here defined names.
          -->
-        <sourceProduct>
-            <name>source</name>
-        </sourceProduct>
+<!--        <sourceProduct>-->
+<!--            <name>source</name>-->
+<!--        </sourceProduct>-->
     </namedSourceProducts>
 
     <parameters>
+        <parameter>
+            <name>tifInputDir</name>
+            <description>The directory containing the input tif files.</description>
+            <label>Input tif file directory</label>
+            <dataType>java.lang.String</dataType>
+            <defaultValue>.</defaultValue>
+            <!-- An empty parameter is not allowed -->
+            <notEmpty>true</notEmpty>
+        </parameter>
+        <parameter>
+            <name>tifOutputDir</name>
+            <description>The directory containing the output tif files.</description>
+            <label>Output tif file directory</label>
+            <dataType>java.lang.String</dataType>
+            <defaultValue>.</defaultValue>
+            <!-- An empty parameter is not allowed -->
+            <notEmpty>true</notEmpty>
+        </parameter>
+
+
     </parameters>
 
 </operator>
