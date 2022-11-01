@@ -1,7 +1,6 @@
 import datetime
 from math import ceil
 
-import sice2_constants
 import sice2_v21_algo
 
 import platform
@@ -15,7 +14,6 @@ import xarray as xr
 
 import esa_snappy
 from esa_snappy import ProductIO
-from esa_snappy import RsMathUtils
 
 # If a Java type is needed which is not imported by snappy by default it can be retrieved manually.
 # First import jpy
@@ -23,14 +21,10 @@ from esa_snappy import jpy
 
 # and then import the type
 import sice2_constants
-import sice2_utils
 import sice2_v21_utils
 
 Float = jpy.get_type('java.lang.Float')
 Color = jpy.get_type('java.awt.Color')
-
-NDSI_HIGH_THRESHOLD = 0.8
-NDSI_LOW_THRESHOLD = -0.5
 
 
 class Sice2V21TifdirsOp:
@@ -112,8 +106,6 @@ class Sice2V21TifdirsOp:
         self.pref_tile_height = 1000
         snow_product.setPreferredTileSize(self.pref_tile_width, self.pref_tile_height)
         self.num_tiles_to_process = ceil(self.width / self.pref_tile_width) * ceil(self.height / self.pref_tile_height)
-        # self.tiles_processed = []
-        # self.tiles_processed_list_cleared = False
         esa_snappy.ProductUtils.copyGeoCoding(sza_product, snow_product)
         esa_snappy.ProductUtils.copyMetadata(sza_product, snow_product)
         snow_product.setStartTime(sza_product.getStartTime())
@@ -266,7 +258,7 @@ class Sice2V21TifdirsOp:
         bands = [f'Oa{i:02}' for i in range(1, sice2_constants.OLCI_NUM_SPECTRAL_BANDS + 1)]
 
         toa = []
-        for i in range(len(self.rtoa_bands)):
+        for i in range(sice2_constants.OLCI_NUM_SPECTRAL_BANDS):
             if self.rtoa_bands[i] is not None:
                 rtoa_tile = context.getSourceTile(self.rtoa_bands[i], target_rectangle)
                 rtoa_data = np.array(rtoa_tile.getSamplesFloat(), dtype=np.float32)
@@ -277,13 +269,12 @@ class Sice2V21TifdirsOp:
 
         olci_scene['toa'] = xr.concat(toa, dim='band')
 
-        # snow = sice2_v21_algo.process(olci_scene)
+        ### SNOW RETRIEVAL:
         if num_pixels == 1000000:
             chunk_size = 250000
         else:
             chunk_size = num_pixels
 
-        ### SNOW RETRIEVAL:
         print('Call process_by_chunk: chunksize=' + str(num_pixels))
         snow = sice2_v21_algo.process_by_chunk(olci_scene, chunk_size=chunk_size)
         ###
@@ -340,6 +331,7 @@ class Sice2V21TifdirsOp:
         """
         pass
 
+
     def _get_band(self, input_product, band_name):
         """
         Gets band from input product by name
@@ -353,6 +345,7 @@ class Sice2V21TifdirsOp:
             if not band:
                 raise RuntimeError('Product has no band or tpg with name', band_name)
         return band
+
 
     def _get_var(self, data, width, height, long_name, unit):
         data_da = xr.DataArray(
