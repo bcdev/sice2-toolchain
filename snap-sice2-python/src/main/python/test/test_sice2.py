@@ -5,6 +5,7 @@ import numpy as np
 import xarray as xr
 from sys import platform
 from datetime import datetime
+from pathlib import Path, PureWindowsPath
 
 import sice2_v21_io
 import sice2_v21_utils
@@ -123,6 +124,13 @@ class TestSice2(unittest.TestCase):
         refl = sice2_v21_utils.Sice2V21Utils.rad_to_refl(rad, sza, flux)
         self.assertAlmostEqual(0.6388, refl, 3)
 
+    # @unittest.skip("skipping test...")
+    def test_get_tif_source_product_paths(self):
+        # adapt filepath before activating this test...
+        tif_input_dir = PureWindowsPath("D:\\olaf\\bc\\sice2\\geus_sice2\\pySICEv21_testdata")
+        tif_source_product_paths = sice2_v21_utils.Sice2V21Utils.get_tif_source_product_paths(str(tif_input_dir))
+        self.assertIsNotNone(tif_source_product_paths)
+        self.assertEqual(27, len(tif_source_product_paths))
 
 # suite = unittest.TestLoader().loadTestsFromTestCase(TestSice2)
 # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -677,3 +677,7 @@ def analyt_func(z1, z2):
 
 coef1, coef2 = analyt_func(0.3, 0.7)
 coef3, coef4 = analyt_func(0.7, 0.865)
+
+mandatory_tif_inputs_for_retrieval = ['r_TOA_01.tif', 'r_TOA_04.tif', 'r_TOA_17.tif', 'r_TOA_21.tif',
+                                  'SZA.tif', 'SAA.tif', 'OZA.tif', 'OAA.tif',
+                                  'O3.tif', 'height.tif']

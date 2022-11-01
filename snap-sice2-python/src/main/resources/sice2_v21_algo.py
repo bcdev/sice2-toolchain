@@ -148,6 +148,7 @@ import numba
 #         asol,
 #         cabsoz,
 #     )
+import sice2_constants
 from sice2_constants import (
     wls,
     bai,
@@ -507,7 +508,8 @@ def snow_albedo_solved(
         solver_wrapper_v = np.vectorize(solver_wrapper)
 
         # loop over all bands
-        for i_channel in range(21):
+        # for i_channel in range(21):
+        for i_channel in range(sice2_constants.OLCI_NUM_SPECTRAL_BANDS):
             snow.alb_sph.sel(band=i_channel).loc[iind_solved] = solver_wrapper_v(
                 OLCI_scene.toa.sel(band=i_channel).loc[iind_solved],
                 aerosol.tau.sel(band=i_channel).loc[iind_solved],
@@ -697,7 +699,8 @@ def spectral_toa_modelling(OLCI_scene, snow, angles, atmosphere):
     r_toa_mod = r_toa_mod * TVODA * TOX * tozone * snow.factor
 
     # calculating difference between modelled and observed r_TOA
-    band_list = np.arange(21)
+    # band_list = np.arange(21)
+    band_list = np.arange(sice2_constants.OLCI_NUM_SPECTRAL_BANDS)
     SE = (OLCI_scene.toa.sel(band=band_list) - r_toa_mod.sel(band=band_list)) ** 2
     RMSE = np.sqrt(SE.mean(dim="band"))
     cv1 = 100 * RMSE / OLCI_scene.toa.mean(dim="band")
@@ -1124,7 +1127,8 @@ def process_by_chunk(
 ):
     size = OLCI_scene.sza.shape[0]
     nchunks = int(max(np.floor(size / chunk_size), 1))
-    OLCI_chunks = OLCI_scene.chunk({"band": 21, "xy": chunk_size})
+    # OLCI_chunks = OLCI_scene.chunk({"band": 21, "xy": chunk_size})
+    OLCI_chunks = OLCI_scene.chunk({"band": sice2_constants.OLCI_NUM_SPECTRAL_BANDS, "xy": chunk_size})
     # snow_chunks = OLCI_chunks.map_blocks(process,kwargs={}, template = snow_template)
     xy_chunk_indexes = np.append(0, np.array(OLCI_chunks.chunks["xy"]).cumsum())
 

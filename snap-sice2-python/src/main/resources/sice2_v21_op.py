@@ -147,11 +147,6 @@ class Sice2V21Op:
         self.isnow_band.setNoDataValue(Float.NaN)
         self.isnow_band.setNoDataValueUsed(True)
 
-        self.conc_band = snow_product.addBand('conc', esa_snappy.ProductData.TYPE_FLOAT32)
-        self.conc_band.setDescription('conc')
-        self.conc_band.setNoDataValue(Float.NaN)
-        self.conc_band.setNoDataValueUsed(True)
-
         self.albedo_bb_planar_sw_band = snow_product.addBand('albedo_bb_planar_sw', esa_snappy.ProductData.TYPE_FLOAT32)
         self.albedo_bb_planar_sw_band.setDescription('Planar SW albedo')
         self.albedo_bb_planar_sw_band.setNoDataValue(Float.NaN)
@@ -268,7 +263,6 @@ class Sice2V21Op:
         al_tile = target_tiles.get(self.al_band)
         r0_tile = target_tiles.get(self.r0_band)
         isnow_tile = target_tiles.get(self.isnow_band)
-        # conc_tile = target_tiles.get(self.conc_band)
         albedo_bb_planar_sw_tile = target_tiles.get(self.albedo_bb_planar_sw_band)
         albedo_bb_spherical_sw_tile = target_tiles.get(self.albedo_bb_spherical_sw_band)
         # factor_tile = target_tiles.get(self.factor_band)
@@ -279,7 +273,6 @@ class Sice2V21Op:
         al_tile.setSamples(al_data)
         r0_tile.setSamples(r0_data)
         isnow_tile.setSamples(isnow_data)
-        # conc_tile.setSamples(conc_data)
         albedo_bb_planar_sw_tile.setSamples(albedo_bb_planar_sw_data)
         albedo_bb_spherical_sw_tile.setSamples(albedo_bb_spherical_sw_data)
         # factor_tile.setSamples(factor_data)
