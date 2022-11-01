@@ -249,12 +249,12 @@ class Sice2V21Op:
 
         grain_diameter_data = snow['diameter'].values
         snow_specific_area_data = snow['area'].values
+        albedo_bb_planar_sw_data = snow['rp3'].values
+        albedo_bb_spherical_sw_data = snow['rs3'].values
         al_data = snow['al'].values
         r0_data = snow['r0'].values
         isnow_data = snow['isnow'].values
         # conc_data = snow['conc'].values
-        albedo_bb_planar_sw_data = snow['rp3'].values
-        albedo_bb_spherical_sw_data = snow['rs3'].values
         # factor_data = snow['factor'].values
 
         # The target tile which shall be filled with data are provided as parameter to this method
