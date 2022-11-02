@@ -5,14 +5,14 @@ This script contains the constants needed by the pySICE library.
 """
 
 import os
+
 import numpy as np
 import xarray as xr
-import pandas as pd
 
 bandcoord = ("band", np.arange(21))
 
 SNOW_TYPE_FLAG = 'SNOW_TYPE_FLAG'
-POL_TYPE_FLAG = 'POL_TYPE_FLAG'
+POL_TYPE_FLAG = 'POL_TYPE'
 
 # OLCI channels
 wls = xr.DataArray(

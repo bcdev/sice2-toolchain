@@ -108,12 +108,12 @@ class TestSice2(unittest.TestCase):
         rect_x = 1000
         rect_y = 3000
         tile_to_process = [rect_x, rect_y]
-        was_processed = sice2_v21_io.Sice2V21Io.check_if_tile_was_processed(width, height, tile_width, tile_height,
+        was_processed = sice2_v21_io.check_if_tile_was_processed(width, height, tile_width, tile_height,
                                                             tile_to_process, tiles_processed)
         self.assertFalse(was_processed)
 
         tiles_processed.append(tile_to_process)
-        was_processed = sice2_v21_io.Sice2V21Io.check_if_tile_was_processed(width, height, tile_width, tile_height,
+        was_processed = sice2_v21_io.check_if_tile_was_processed(width, height, tile_width, tile_height,
                                                                             tile_to_process, tiles_processed)
         self.assertTrue(was_processed)
 

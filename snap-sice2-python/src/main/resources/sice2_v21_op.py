@@ -1,8 +1,6 @@
 import datetime
 from math import ceil
 
-import sice2_v21_algo
-
 import platform
 import tempfile
 import sys
@@ -22,6 +20,8 @@ from esa_snappy import jpy
 
 # and then import the type
 import sice2_constants
+import sice2_v21_algo
+import sice2_v21_io
 import sice2_v21_utils
 
 Float = jpy.get_type('java.lang.Float')
@@ -86,21 +86,20 @@ class Sice2V21Op:
         self.radiance_bands = []
         self.radiance_band_names = [f'Oa{i:02}_radiance' for i in range(1, sice2_constants.OLCI_NUM_SPECTRAL_BANDS + 1)]
         for i in range(1, len(self.radiance_band_names) + 1):
-            self.radiance_bands.append(self._get_band(source_product, self.radiance_band_names[i-1]))
+            self.radiance_bands.append(self._get_band(source_product, self.radiance_band_names[i - 1]))
 
         self.solar_flux_bands = []
-        self.solar_flux_band_names = [f'solar_flux_band_{i:01}' for i in range(1, sice2_constants.OLCI_NUM_SPECTRAL_BANDS + 1)]
+        self.solar_flux_band_names = [f'solar_flux_band_{i:01}' for i in
+                                      range(1, sice2_constants.OLCI_NUM_SPECTRAL_BANDS + 1)]
         for i in range(1, len(self.solar_flux_band_names) + 1):
-            # print('self.solar_flux_bands[i-1]: ' + self.solar_flux_band_names[i-1])
-            self.solar_flux_bands.append(self._get_band(source_product, self.solar_flux_band_names[i-1]))
+            self.solar_flux_bands.append(self._get_band(source_product, self.solar_flux_band_names[i - 1]))
 
         # Create the target product
         snow_product = esa_snappy.Product('py_SICE21_snow', 'py_SICE21_snow', self.width, self.height)
-        # snow_product.setPreferredTileSize(self.width, self.height)
         self.pref_tile_width = 1000
         self.pref_tile_height = 1000
         snow_product.setPreferredTileSize(self.pref_tile_width, self.pref_tile_height)
-        self.num_tiles_to_process = ceil(self.width/self.pref_tile_width) * ceil(self.height/self.pref_tile_height)
+        self.num_tiles_to_process = ceil(self.width / self.pref_tile_width) * ceil(self.height / self.pref_tile_height)
         esa_snappy.ProductUtils.copyGeoCoding(source_product, snow_product)
         esa_snappy.ProductUtils.copyMetadata(source_product, snow_product)
         snow_product.setStartTime(source_product.getStartTime())
@@ -147,10 +146,19 @@ class Sice2V21Op:
         self.r0_band.setNoDataValue(Float.NaN)
         self.r0_band.setNoDataValueUsed(True)
 
-        self.isnow_band = snow_product.addBand('isnow', esa_snappy.ProductData.TYPE_FLOAT32)
+        self.isnow_band = snow_product.addBand('isnow', esa_snappy.ProductData.TYPE_INT16)
         self.isnow_band.setDescription('Snow retrieval flag')
-        self.isnow_band.setNoDataValue(Float.NaN)
-        self.isnow_band.setNoDataValueUsed(True)
+        snow_retrieval_flag_coding = sice2_v21_io.create_snow_retrieval_flag_coding(sice2_constants.SNOW_TYPE_FLAG)
+        self.isnow_band.setSampleCoding(snow_retrieval_flag_coding)
+        snow_product.getFlagCodingGroup().add(snow_retrieval_flag_coding)
+        sice2_v21_io.create_snow_retrieval_bitmask(snow_product)
+
+        self.pol_type_band = snow_product.addBand('pol_type', esa_snappy.ProductData.TYPE_INT16)
+        self.pol_type_band.setDescription('Type of pollutant')
+        pol_type_index_coding, image_info = sice2_v21_io.create_pol_type_index_coding(sice2_constants.POL_TYPE_FLAG)
+        self.pol_type_band.setImageInfo(image_info)
+        snow_product.getIndexCodingGroup().add(pol_type_index_coding)
+        self.pol_type_band.setSampleCoding(pol_type_index_coding)
 
         self.albedo_bb_planar_sw_band = snow_product.addBand('albedo_bb_planar_sw', esa_snappy.ProductData.TYPE_FLOAT32)
         self.albedo_bb_planar_sw_band.setDescription('Shortwave broadband planar albedo')
@@ -183,13 +191,6 @@ class Sice2V21Op:
         self.cv2_band.setNoDataValue(Float.NaN)
         self.cv2_band.setNoDataValueUsed(True)
 
-        self.pol_type_band = snow_product.addBand('pol_type', esa_snappy.ProductData.TYPE_INT16)
-        self.pol_type_band.setDescription('Type of pollutant: 1(soot), 2( dust), 3 and 4 (other or mixture)')
-        pol_type_flag_coding = self.create_pol_type_flag_coding(sice2_constants.POL_TYPE_FLAG)
-        self.pol_type_band.setSampleCoding(pol_type_flag_coding)
-        snow_product.getFlagCodingGroup().add(pol_type_flag_coding)
-        self.create_pol_type_bitmask(snow_product)
-
         self.impurity_load_band = snow_product.addBand('impurity_load', esa_snappy.ProductData.TYPE_FLOAT32)
         self.impurity_load_band.setDescription('Pollutant load')
         self.impurity_load_band.setNoDataValue(Float.NaN)
@@ -208,38 +209,6 @@ class Sice2V21Op:
             r_brr_band = snow_product.addBand('rBRR_' + str(i + 1).zfill(2),
                                               esa_snappy.ProductData.TYPE_FLOAT32)
             self.r_brr_bands.append(r_brr_band)
-
-
-    def create_pol_type_flag_coding(self, flag_id):
-        pol_type_flag_coding = esa_snappy.FlagCoding(flag_id)
-        pol_type_flag_coding.addFlag("SOOT", BitSetter.setFlag(0, 0), "Soot")
-        pol_type_flag_coding.addFlag("DUST", BitSetter.setFlag(0, 1), "Dust")
-        pol_type_flag_coding.addFlag("OTHER", BitSetter.setFlag(0, 2), "Other")
-        pol_type_flag_coding.addFlag("MIXTURE", BitSetter.setFlag(0, 3), "Mixture")
-
-        return pol_type_flag_coding
-
-
-    def create_pol_type_bitmask(self, snow_product):
-        index = 0
-        w = self.width
-        h = self.height
-
-        mask = BandMathsType.create("SOOT", "Soot", w, h, "pol_type.SOOT", Color.MAGENTA, 0.5)
-        snow_product.getMaskGroup().add(index, mask)
-        index = index + 1
-
-        mask = BandMathsType.create("DUST", "Dust", w, h, "pol_type.DUST", Color.RED, 0.5)
-        snow_product.getMaskGroup().add(index, mask)
-        index = index + 1
-
-        mask = BandMathsType.create("OTHER", "Other", w, h, "pol_type.OTHER", Color.YELLOW, 0.5)
-        snow_product.getMaskGroup().add(index, mask)
-        index = index + 1
-
-        mask = BandMathsType.create("MIXTURE", "Mixture", w, h, "pol_type.MIXTURE", Color.ORANGE, 0.5)
-        snow_product.getMaskGroup().add(index, mask)
-
 
     def computeTileStack(self, context, target_tiles, target_rectangle):
 
@@ -298,15 +267,11 @@ class Sice2V21Op:
             toa.append(np.clip(_toa, 0, 1))
         olci_scene['toa'] = xr.concat(toa, dim='band')
 
-        ### SNOW RETRIEVAL:
-        if num_pixels == 1000000:
-            chunk_size = 250000
-        else:
-            chunk_size = num_pixels
-
-        print('Call process_by_chunk: chunksize=' + str(num_pixels))
+        ##### SNOW RETRIEVAL:
+        chunk_size = int(min(num_pixels, 250000))
+        print('Call process_by_chunk: chunksize=' + str(chunk_size))
         snow = sice2_v21_algo.process_by_chunk(olci_scene, chunk_size=chunk_size)
-        ###
+        #####
 
         # Extract output from 'snow' xarray.Dataset:
         grain_diameter_data = snow['diameter'].values
@@ -337,19 +302,18 @@ class Sice2V21Op:
         target_tiles.get(self.snow_specific_area_band).setSamples(snow_specific_area_data)
         target_tiles.get(self.al_band).setSamples(al_data)
         target_tiles.get(self.r0_band).setSamples(r0_data)
-        target_tiles.get(self.isnow_band).setSamples(isnow_data)
         target_tiles.get(self.albedo_bb_planar_sw_band).setSamples(albedo_bb_planar_sw_data)
         target_tiles.get(self.albedo_bb_spherical_sw_band).setSamples(albedo_bb_spherical_sw_data)
         target_tiles.get(self.factor_band).setSamples(factor_data)
         target_tiles.get(self.o3_sice_band).setSamples(o3_sice_data)
         target_tiles.get(self.cv1_band).setSamples(cv1_data)
         target_tiles.get(self.cv2_band).setSamples(cv2_data)
-
-        # src_ref_variable_arr[np.where(src_vza_variable_arr > float(config_vza_max_valid))] = np.nan
-        for key in sice2_constants.pol_type_flags_map:
-            pol_type_data[np.where(pol_type_data == float(key))] = sice2_constants.pol_type_flags_map[key]
-        target_tiles.get(self.pol_type_band).setSamples(pol_type_data)
         target_tiles.get(self.impurity_load_band).setSamples(impurity_load_data)
+        target_tiles.get(self.pol_type_band).setSamples(pol_type_data)
+
+        for key in sice2_constants.snow_type_flags_map:
+            isnow_data[np.where(isnow_data == float(key))] = sice2_constants.snow_type_flags_map[key]
+        target_tiles.get(self.isnow_band).setSamples(isnow_data)
 
         for i in range(sice2_constants.OLCI_NUM_SPECTRAL_BANDS - 4):
             target_tiles.get(self.albedo_spectral_spherical_bands[i]).setSamples(albedo_spectral_spherical_data[i])
@@ -364,8 +328,8 @@ class Sice2V21Op:
         """
         pass
 
-
-    def _get_band(self, input_product, band_name):
+    @staticmethod
+    def _get_band(input_product, band_name):
         """
         Gets band from input product by name
         :param input_product
@@ -379,8 +343,17 @@ class Sice2V21Op:
                 raise RuntimeError('Product has no band or tpg with name', band_name)
         return band
 
+    @staticmethod
+    def _get_var(data, width, height, long_name, unit):
+        """
 
-    def _get_var(self, data, width, height, long_name, unit):
+        :param data:
+        :param width:
+        :param height:
+        :param long_name:
+        :param unit:
+        :return:
+        """
         data_da = xr.DataArray(
             data=data.reshape(width, height),
             dims=["x", "y"],

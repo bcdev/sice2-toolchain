@@ -1,366 +1,122 @@
 # -*- coding: utf-8 -*-
 """
-@author: bav@geus.dk
+@author: dolaf
 
-tip list:
-    %matplotlib inline
-    %matplotlib qt
-    import pdb; pdb.set_trace()
 """
 
-import os
-from glob import glob
 from math import ceil
 
-import xarray as xr
-# import netCDF4
-import numpy as np
-# import rioxarray
-import pandas as pd
+from esa_snappy import FlagCoding
 
-try:
-    import satpy
-    # import rasterio as rio
-except ImportError:
-    rio = None  # make rasterio optional at this stage
+from esa_snappy import jpy
 
-
-class Sice2V21Io(object):
-    def __init__(self, dirname):
-
-        self.dirname = dirname
-
-        if dirname.endswith(".zarr"):
-            self._get_size_zarr()
-            self.open = self.open_zarr
-        elif os.path.exists(os.path.join(dirname, 'Oa01_radiance.nc')):
-            # self._get_size_satpy()
-            self.open = self.open_satpy
-        elif os.path.exists(os.path.join(dirname, 'r_TOA_01.tif')):
-            self._get_size_tif()
-            self.open = self.open_tif
-        elif dirname.endswith(".csv"):
-            self.filepath = dirname
-            self.open = self.open_csv
-        else:
-            csv_list = [file for file in os.listdir(dirname) if file.endswith('.csv')]
-            if len(csv_list) == 1:
-                self.filepath = os.path.join(dirname, csv_list[0])
-                self.open = self.open_csv
-            else:
-                print("No tif, netcdf, (unique) csv or zarr file found in ", dirname)
-    def open_csv(self):
-        print(self.filepath)
-        df = pd.read_csv(self.filepath)
-        self.olci_scene = xr.Dataset(
-            {"toa": (("xy", "band"),
-                     df[['Oa'+str(i).zfill(2) + '_reflectance' for i in range(1, 22)]].values),
-             "sza": (("xy"),  df['sza'].values),
-             "saa": (("xy"),  df['saa'].values),
-             "vza": (("xy"),  df['vza'].values),
-             "vaa": (("xy"),  df['vaa'].values),
-             "ozone": (("xy"),  df['total_ozone'].values),
-             "elevation": (("xy"),  df['elevation'].values),
-             },
-            coords={
-                "xy": np.arange(df.shape[0]),
-                "band": np.arange(0,21),
-            },
-        )
-    def _open_tif(self, filename):
-        return rio.open(os.path.join(self.dirname, filename))
-
-    def _get_size_tif(self):
-        self.meta = self._open_tif('r_TOA_01.tif').meta
-        self.original_width = self.meta['width']
-        self.original_height = self.meta['height']
-
-    def open_tif(self, x0=0, y0=0, width=None, height=None):
-        # # %% ========= input tif ===============
-        if not os.path.isdir(self.dirname):
-            raise Exception("dirname must be a directory")
-
-        def read_tif(filename):
-            chunks = None
-            chunks = 'auto'
-            # data = xr.open_rasterio(os.path.join(self.dirname, filename), chunks=chunks).squeeze(dim='band', drop=True)
-            # data = rioxarray.open_rasterio(os.path.join(self.dirname, filename), chunks=chunks).squeeze(dim='band', drop=True)
-
-            if width is not None:
-                data = data.isel(x=slice(x0, x0 + width))
-            if height is not None:
-                data = data.isel(y=slice(y0, y0 + height))
-
-            return data.stack(xy=("x", "y")).compute()
-
-        self.meta['transform'] = rio.transform.Affine(1.0, 0.0, 0.0, 0.0, -1.0, 0.0)  # to improve. This is invalid in some cases
-        self.meta.update(compress='DEFLATE')
-        self.toa = []
-        for i in range(21):
-            try:
-                dat = read_tif(f'r_TOA_{i + 1:02}.tif')
-            except:
-                if i in [16, 20]:
-                    raise Exception('Missing the necessary bands')
-                else:
-                    print('Cannot load ', 'r_TOA_'+str(i+1).zfill(2)+'.tif, replacing by nans')
-                    dat = xr.full_like(self.toa[0], fill_value=np.nan)
-            self.toa.append(dat)
-        self.olci_scene = xr.Dataset()
-        self.olci_scene['toa'] = xr.concat(self.toa, dim='band')
-        # print("toa=", self.toa.coords)
-
-        self.olci_scene['ozone'] = read_tif('O3.tif')
-        # self.water = read_tif('WV.tif')  # save memory, it is not used
-        self.olci_scene['sza'] = read_tif('SZA.tif')
-        self.olci_scene['saa'] = read_tif('SAA.tif')
-        self.olci_scene['vza'] = read_tif('OZA.tif')
-        self.olci_scene['vaa'] = read_tif('OAA.tif')
-        self.olci_scene['elevation'] = read_tif('height.tif').astype(np.float64)
-
-        mask = ~np.isnan(self.olci_scene.toa.sel(band=0))
-        self.olci_scene = self.olci_scene.where(mask)
-
-        t = self.olci_scene.elevation.unstack('xy')
-        self.meta['width'] = len(t.x)
-        self.meta['height'] = len(t.y)
-
-    # def _get_size_satpy(self):
-    #     filename = os.path.join(self.dirname, 'Oa01_radiance.nc')
-    #     rootgrp = netCDF4.Dataset(filename, "r")
-    #     self.original_width = rootgrp.dimensions['columns'].size
-    #     self.original_height = rootgrp.dimensions['rows'].size
-
-    def open_satpy(self, x0=0, y0=0, width=None, height=None, with_geom=True):
-        # import satpy  # this is not good practice but avoid satpy to be a compulsary dependence
-
-        filenames = glob(os.path.join(self.dirname, "*.nc"))
-
-        scene = satpy.Scene(reader="olci_l1b", filenames=filenames)
-
-        variables = {
-            'solar_azimuth_angle': 'saa',
-            'solar_zenith_angle': 'sza',
-            'satellite_azimuth_angle': 'vaa',
-            'satellite_zenith_angle': 'vza',
-            'total_ozone': 'ozone',
-            'altitude': 'elevation'
-        }
-
-        scene.load(list(variables.keys()))
-
-        width = scene.to_xarray_dataset().dims['x']
-        height = scene.to_xarray_dataset().dims['y']
-
-        islice = {}
-        if width is not None:
-            islice['x'] = slice(x0, x0 + width)
-        if height is not None:
-            islice['y'] = slice(y0, y0 + height)
-
-        def get_var(variable):
-            # return the variable and remove what needs to be remove
-            data = scene[variable].isel(islice).compute().stack(xy=("x", "y"))
-            data.attrs = {}  # remove attributes, due to some conflict with tà_zarr being unable to serialize datatime
-            if 'crs' in data.coords:
-                del data.coords['crs']  # idem. zarr complains
-            return data
-
-        self.olci_scene = xr.Dataset()
-        if with_geom:
-            scene.load(['longitude', 'latitude'])
-            self.olci_scene = self.olci_scene.assign_coords(longitude=get_var('longitude'),
-                                                            latitude=get_var('latitude'))
-        for variable in variables:
-            self.olci_scene[variables[variable]] = get_var(variable)
-
-        scene.unload()  # maybe useless
-
-        coef = 1 / np.cos(np.deg2rad(self.olci_scene['sza'])) / 100.
-
-        bands = [f'Oa{i:02}' for i in range(1, 22)]
-        scene.load(bands)
-
-        scene.load([satpy.DataQuery(name=band, calibration='reflectance') for band in bands])
-        toa = []
-        for band in bands:
-            toa.append(np.clip(get_var(band) * coef, 0, 1))
-        self.olci_scene['toa'] = xr.concat(toa, dim='band')
-
-        if 'crs' in self.olci_scene['toa'].coords:
-            del self.olci_scene['toa'].coords['crs']  # idem. zarr complains
-
-        scene.unload()  # probably useless
-
-    def _get_size_zarr(self):
-        ds = xr.open_zarr(self.dirname)
-        self.original_width = len(ds.x)
-        self.original_height = len(ds.y)
-
-    def open_zarr(self, x0=0, y0=0, width=None, height=None, with_geom=True):
-
-        variables = {
-            'solar_azimuth_angle': 'saa',
-            'solar_zenith_angle': 'sza',
-            'satellite_azimuth_angle': 'vaa',
-            'satellite_zenith_angle': 'vza',
-            'total_ozone': 'ozone',
-            'altitude': 'elevation'
-        }
-
-        ds = xr.open_zarr(self.dirname)
-
-        islice = {}
-        if width is not None:
-            islice['x'] = slice(x0, x0 + width)
-        if height is not None:
-            islice['y'] = slice(y0, y0 + height)
-
-        def get_var(variable):
-            # return the variable and remove what needs to be remove
-            return ds[variable].isel(islice).stack(xy=("x", "y")).compute()
-
-        self.olci_scene = xr.Dataset()
-        if with_geom:
-            self.olci_scene['longitude'] = get_var('longitude')
-            self.olci_scene['latitude'] = get_var('latitude')
-
-        for variable in variables:
-            self.olci_scene[variables[variable]] = get_var(variable)
-
-        bands = [f'Oa{i:02}' for i in range(1, 22)]
-        toa = []
-        for band in bands:
-            toa.append(get_var(band))
-        self.olci_scene['toa'] = xr.concat(toa, dim='band')
-
-    def to_geotif(self, extended_output=False, save_spectral=False):
-        def write_output(var, var_name, in_folder, meta):
-            # this functions write tif files based on a model file, here "Oa01"
-            # opens a file for writing
-            var = var.unstack(dim='xy').transpose('y', 'x')
-            var.rio.to_raster(os.path.join(in_folder, var_name + '.tif'))
-            # with rio.open(os.path.join(in_folder, var_name + '.tif'), 'w+', **meta) as dst:
-            #     dst.write(var.astype('float32'), 1)
-
-        # write_output(self.D, 'grain_diameter',self.dirname)
-        write_output(6 / 0.917 / self.diameter, 'snow_specific_area', self.dirname, self.meta)
-        write_output(self.rp3, 'albedo_bb_planar_sw', self.dirname, self.meta)
-        write_output(self.rs3, 'albedo_bb_spherical_sw', self.dirname, self.meta)
-        # write_output(self.longitude, 'longitude', self.dirname, self.meta)
-        # write_output(self.latitude, 'latitude', self.dirname, self.meta)
-        if isinstance(self.isnow, np.ndarray):
-            self.isnow = xr.DataArray(self.isnow, coords=self.sza.coords)
-        write_output(self.isnow, 'diagnostic_retrieval', self.dirname, self.meta)
-
-        if extended_output:
-            write_output(self.al, 'al', self.dirname, self.meta)
-            write_output(self.r0, 'r0', self.dirname, self.meta)
-            if hasattr(conc):
-                write_output(self.conc, 'conc', self.dirname, self.meta)
-            else:
-                print("no conc")
-
-        if save_spectral:
-            # for i in np.arange(21):
-            for b in np.append(np.arange(11), np.arange(15, 21)):
-                write_output(self.alb_sph.sel(band=b), f'albedo_spectral_spherical_{b+1:02}', self.dirname, self.meta)
-                write_output(self.rp.sel(band=b), f'albedo_spectral_planar_{b+1:02}', self.dirname, self.meta)
-                write_output(self.refl.sel(band=b), f'rBRR_{b+1:02}', self.dirname, self.meta)
-
-    def to_zarr(self, append_dim=None):
-        ds = xr.Dataset({'snow_specific_area': 6 / 0.917 / self.diameter.unstack(dim='xy'),
-                         'albedo_bb_planar_sw': self.rp3.unstack(dim='xy'),
-                         'albedo_bb_spherical_sw': self.rs3.unstack(dim='xy')})
-
-        if append_dim:
-            mode = 'a'
-            encodings = None
-        else:
-            mode = 'w'
-            encodings = {v: {"dtype": "float32"} for v in ds.variables}
-
-        output_path = self.dirname
-        if output_path.endswith('.zarr'):
-            output_path, _ = os.path.splitext(output_path)
-        if output_path.endswith('.SEN3'):
-            output_path, _ = os.path.splitext(output_path)
-        ds.to_zarr(output_path + '.OUT.zarr', mode=mode, append_dim=append_dim, encoding=encodings, consolidated=True)
+BitSetter = jpy.get_type('org.esa.snap.core.util.BitSetter')
+IndexCoding = jpy.get_type('org.esa.snap.core.datamodel.IndexCoding')
+ColorPaletteDef = jpy.get_type('org.esa.snap.core.datamodel.ColorPaletteDef')
+Point = jpy.get_type('org.esa.snap.core.datamodel.ColorPaletteDef$Point')
+ImageInfo = jpy.get_type('org.esa.snap.core.datamodel.ImageInfo')
+BandMathsType = jpy.get_type('org.esa.snap.core.datamodel.Mask$BandMathsType')
+Color = jpy.get_type('java.awt.Color')
 
 
-    def write_output(self, snow, OutputFolder):
-        # if filename.endswith('.csv'):
-        #     print('\nText file output')
-        #     data_out = pd.DataFrame()
-        #     data_out['grain_diameter'] = snow.diameter.to_pandas()
-        #     data_out['snow_specific_area']= snow.area.to_pandas()
-        #     data_out['al'] = snow.al.to_pandas()
-        #     data_out['r0'] = snow.r0.to_pandas()
-        #     data_out['diagnostic_retrieval'] = snow.isnow.to_pandas()
-        #     # data_out['conc'] = snow.conc.to_pandas()
-        #     data_out['albedo_bb_planar_sw'] = snow.rp3.to_pandas()
-        #     data_out['albedo_bb_spherical_sw'] = snow.rs3.to_pandas()
-        #     # for i in np.append(np.arange(11), np.arange(15,21)):
-        #     # for i in np.arange(21):
-        #     # data_out['albedo_spectral_spherical_' + str(i + 1).zfill(2)] = snow.alb_sph[i,:,:]
-        #     # for i in np.append(np.arange(11), np.arange(15,21)):
-        #     # data_out['rBRR_'+str(i+1).zfill(2)] = snow.rp[i,:,:]
-        #     data_out.to_csv(OutputFolder + '/out.csv')
-        #     print(OutputFolder + '/out.csv')
-        # else:
-        #     file_name_list = {
-        #         "BXXX": "O3_SICE",
-        #         "diameter": "grain_diameter",
-        #         "area": "snow_specific_area",
-        #         "al": "al",
-        #         "r0": "r0",
-        #         "isnow": "isnow",
-        #         "conc": "conc",
-        #         "rp3": "albedo_bb_planar_sw",
-        #         "rs3": "albedo_bb_spherical_sw",
-        #         "factor": "factor",
-        #     }
-        #     print('Printing out:')
-        #     for var in ["diameter", "area", "rp3", "rs3", "isnow", "r0", "al"]:
-        #         print(var)
-        #         snow[var].unstack(dim="xy").transpose("y", "x").rio.to_raster(
-        #             os.path.join(OutputFolder, file_name_list[var] + ".tif")
-        #         )
-        #     snow.alb_sph.sel(band=0).unstack(dim="xy").transpose("y", "x").rio.to_raster(OutputFolder+'/alb_sph_01_solved.tif')
-        #     snow.rp.sel(band=0).unstack(dim="xy").transpose("y", "x").rio.to_raster(OutputFolder+'/alb_pl_01_solved.tif')
-        #     # for var in ['BXXX', ]:
-        #     #     var = OLCI_scene[var].unstack(dim='xy').transpose('y', 'x').rio.to_raster(os.path.join(OutputFolder, file_name_list[var] + '.tif'))
+def check_if_tile_was_processed(width, height, tile_width, tile_height, tile_to_process, tiles_processed):
+    num_tiles_x = ceil(width/tile_width)
+    num_tiles_y = ceil(height/tile_height)
+    tiles_x = []
+    for i in range(num_tiles_x):
+        tiles_x.append((i+1)*tile_width)
+    tiles_y = []
+    for i in range(num_tiles_y):
+        tiles_y.append((i+1)*tile_height)
 
-        file_name_list = {
-            "BXXX": "O3_SICE",
-            "diameter": "grain_diameter",
-            "area": "snow_specific_area",
-            "al": "al",
-            "r0": "r0",
-            "isnow": "isnow",
-            "conc": "conc",
-            "rp3": "albedo_bb_planar_sw",
-            "rs3": "albedo_bb_spherical_sw",
-            "factor": "factor",
-        }
-        print('Printing out:')
-        for var in ["diameter", "area", "rp3", "rs3", "isnow", "r0", "al"]:
-            print(var)
-            snow[var].unstack(dim="xy").transpose("y", "x").rio.to_raster(
-                os.path.join(OutputFolder, file_name_list[var] + ".tif")
-            )
-        snow.alb_sph.sel(band=0).unstack(dim="xy").transpose("y", "x").rio.to_raster(OutputFolder+'/alb_sph_01_solved.tif')
-        snow.rp.sel(band=0).unstack(dim="xy").transpose("y", "x").rio.to_raster(OutputFolder+'/alb_pl_01_solved.tif')
+    return tile_to_process in tiles_processed
 
-    @staticmethod
-    def check_if_tile_was_processed(width, height, tile_width, tile_height, tile_to_process, tiles_processed):
-        num_tiles_x = ceil(width/tile_width)
-        num_tiles_y = ceil(height/tile_height)
-        tiles_x = []
-        for i in range(num_tiles_x):
-            tiles_x.append((i+1)*tile_width)
-        tiles_y = []
-        for i in range(num_tiles_y):
-            tiles_y.append((i+1)*tile_height)
 
-        return tile_to_process in tiles_processed
+def create_pol_type_index_coding(flag_id):
+    pol_type_index_coding = IndexCoding(flag_id)
+    points = []
+    pol_type_flags = ['SOOT', 'DUST', 'OTHER', 'MIXTURE']
+    pol_type_descr = ['Soot', 'Dust', 'Other', 'Mixture']
+    pol_type_colors = [Color.RED, Color.PINK, Color.YELLOW, Color.ORANGE]
+    for i in range(len(pol_type_flags)):
+        pol_type_index_coding.addIndex(pol_type_flags[i], i, pol_type_descr[i])
+        points.append(Point(i, pol_type_colors[i], pol_type_descr[i]))
+
+    cpd = ColorPaletteDef(points)
+    imageInfo = ImageInfo(cpd)
+
+    return pol_type_index_coding, imageInfo
+
+
+def create_snow_retrieval_flag_coding(flag_id):
+    snow_retrieval_flag_coding = FlagCoding(flag_id)
+    snow_retrieval_flag_coding.addFlag("CLEAN_SNOW", BitSetter.setFlag(0, 0), "Clean snow")
+    snow_retrieval_flag_coding.addFlag("POLLUTED_SNOW", BitSetter.setFlag(0, 1), "Polluted snow")
+    snow_retrieval_flag_coding.addFlag("PARTIALLY_SNOW_COVERED", BitSetter.setFlag(0, 2),
+                                       "Partially snow covered pixel")
+    snow_retrieval_flag_coding.addFlag("SZA_OOR", BitSetter.setFlag(0, 3),
+                                       "SZA out of range (< 75 deg), no retrival")
+    snow_retrieval_flag_coding.addFlag("RTOA_01_OOR", BitSetter.setFlag(0, 4),
+                                       "TOA reflectance at band 21 < 0.1, no retrieval")
+    snow_retrieval_flag_coding.addFlag("RTOA_21_OOR", BitSetter.setFlag(0, 5),
+                                       "TOA reflectance at band 1 < 0.2, no retrieval")
+    snow_retrieval_flag_coding.addFlag("GRAIN_DIAMETER_OOR", BitSetter.setFlag(0, 6),
+                                       "grain_diameter < 0.1, no retrieval (potential cloud flag)")
+    snow_retrieval_flag_coding.addFlag("SPH_ALB_NEG", BitSetter.setFlag(0, 7),
+                                       "Retrieved spherical albedo negative in band 1, 2 or 3")
+    snow_retrieval_flag_coding.addFlag("SPH_ALB_NO_SOLUTION", BitSetter.setFlag(0, 8),
+                                       "Impossible to solve snow spherical albedo equation")
+
+    return snow_retrieval_flag_coding
+
+
+def create_snow_retrieval_bitmask(snow_product):
+    index = 0
+    w = snow_product.getSceneRasterWidth()
+    h = snow_product.getSceneRasterHeight()
+
+    mask = BandMathsType.create("CLEAN_SNOW", "Clean snow", w, h,
+                                "isnow.CLEAN_SNOW", Color.CYAN, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("POLLUTED_SNOW", "Polluted snow", w, h,
+                                "isnow.POLLUTED_SNOW", Color.PINK, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("PARTIALLY_SNOW_COVERED", "Partially snow covered pixel", w, h,
+                                "isnow.PARTIALLY_SNOW_COVERED", Color.ORANGE, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("SZA_OOR", "SZA out of range (< 75 deg), no retrival", w, h,
+                                "isnow.SZA_OOR", Color.BLUE, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("RTOA_01_OOR", "TOA reflectance at band 21 < 0.1, no retrieval", w, h,
+                                "isnow.RTOA_01_OOR", Color.GREEN, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("RTOA_21_OOR", "TOA reflectance at band 1 < 0.2, no retrieval", w, h,
+                                "isnow.RTOA_21_OOR", Color(50, 150, 150), 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("GRAIN_DIAMETER_OOR", "grain_diameter < 0.1, no retrieval (potential cloud flag)", w, h,
+                                "isnow.GRAIN_DIAMETER_OOR", Color.YELLOW, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("SPH_ALB_NEG", "Retrieved spherical albedo negative in band 1, 2 or 3", w, h,
+                                "isnow.SPH_ALB_NEG", Color(150, 50, 50), 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("SPH_ALB_NO_SOLUTION", "Impossible to solve snow spherical albedo equation", w, h,
+                                "isnow.SPH_ALB_NO_SOLUTION", Color.MAGENTA, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+
+
