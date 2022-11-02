@@ -1,14 +1,10 @@
-import os
-import sys
 import unittest
 import numpy as np
 import xarray as xr
-from sys import platform
-from datetime import datetime
-from pathlib import Path, PureWindowsPath
 
-import sice2_v21_io
+import sice2_constants
 import sice2_v21_utils
+
 
 # noinspection PyUnresolvedReferences
 class TestSice2(unittest.TestCase):
@@ -99,38 +95,54 @@ class TestSice2(unittest.TestCase):
         return data_da.compute().stack(xy=("x", "y"))
 
 
-    def test_check_if_tile_was_processed(self):
-        width = 4865
-        height = 4091
-        tile_width = 1000
-        tile_height = 1000
-        tiles_processed = []
-        rect_x = 1000
-        rect_y = 3000
-        tile_to_process = [rect_x, rect_y]
-        was_processed = sice2_v21_io.check_if_tile_was_processed(width, height, tile_width, tile_height,
-                                                            tile_to_process, tiles_processed)
-        self.assertFalse(was_processed)
-
-        tiles_processed.append(tile_to_process)
-        was_processed = sice2_v21_io.check_if_tile_was_processed(width, height, tile_width, tile_height,
-                                                                            tile_to_process, tiles_processed)
-        self.assertTrue(was_processed)
-
     def test_rad_to_refl(self):
         rad = 39.03614
         sza = 82.5072
         flux = 1472.06
-        refl = sice2_v21_utils.Sice2V21Utils.rad_to_refl(rad, sza, flux)
+        refl = sice2_v21_utils.rad_to_refl(rad, sza, flux)
         self.assertAlmostEqual(0.6388, refl, 3)
 
     # @unittest.skip("skipping test...")
     def test_get_tif_source_product_paths(self):
         # adapt filepath before activating this test...
         tif_input_dir = PureWindowsPath("D:\\olaf\\bc\\sice2\\geus_sice2\\pySICEv21_testdata")
-        tif_source_product_paths = sice2_v21_utils.Sice2V21Utils.get_tif_source_product_paths(str(tif_input_dir))
+        tif_source_product_paths = sice2_v21_utils.get_tif_source_product_paths(str(tif_input_dir))
         self.assertIsNotNone(tif_source_product_paths)
         self.assertEqual(27, len(tif_source_product_paths))
+
+    def test_get_valid_expression_filter_array(self):
+        flagname = 'WQSF'
+        valid_pixel_expr = '(WQSF.WATER and Oa10_reflectance < 0.13)   or (WQSF.LAND and  not    WQSF.CLOUD)'
+        condition = sice2_v21_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
+                                                                      sice2_constants.
+                                                                      OLCI_L2_IPF_BITMASK_FLAG_CODING_DICT)
+
+        wqsf_arr = np.array([[1, 2, 18], [4, 8, 45], [18, 34, 98]])
+        oa10_reflectance_arr = np.array([[0.1, 0.15, 0.12], [0.12, 0.18, 0.09], [0.03, 0.2, 0.07]])
+
+        variables_in_expr_dict = {'WQSF': wqsf_arr, 'Oa10_reflectance': oa10_reflectance_arr}
+
+        filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3)
+        expected_arr = np.array([[False, False, True], [True, False, False], [True, False, True]])
+        self.assertSequenceEqual(filter_array.tolist(), expected_arr.tolist())
+
+        ################
+        # Idepix:
+        flagname = 'pixel_classif_flags'
+        valid_pixel_expr = '(not pixel_classif_flags.IDEPIX_LAND and Oa10_reflectance < 0.13)   or (not pixel_classif_flags.IDEPIX_LAND and    pixel_classif_flags.IDEPIX_CLOUD)'
+        condition = sice2_v21_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
+                                                                        sice2_constants.
+                                                                        IDEPIX_BITMASK_FLAG_CODING_DICT)
+
+        idepix_arr = np.array([[1, 2, 18], [4, 1024, 45], [18, 34, 98]])
+        oa10_reflectance_arr = np.array([[0.1, 0.15, 0.12], [0.12, 0.18, 0.09], [0.03, 0.2, 0.07]])
+
+        variables_in_expr_dict = {'pixel_classif_flags': idepix_arr, 'Oa10_reflectance': oa10_reflectance_arr}
+
+        filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3)
+        expected_arr = np.array([[True, True, True], [True, False, True], [True, True, True]])
+        self.assertSequenceEqual(filter_array.tolist(), expected_arr.tolist())
+
 
 # suite = unittest.TestLoader().loadTestsFromTestCase(TestSice2)
 # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -69,7 +69,7 @@ class Sice2V21TifdirsOp:
 
         self.called_compute_tile_stack = 0
 
-        tif_source_product_paths = sice2_v21_utils.Sice2V21Utils.get_tif_source_product_paths(self.tif_input_directory)
+        tif_source_product_paths = sice2_v21_utils.get_tif_source_product_paths(self.tif_input_directory)
 
         sza_product = ProductIO.readProduct(self.tif_input_directory + os.sep + "SZA.tif")
         saa_product = ProductIO.readProduct(self.tif_input_directory + os.sep + "SAA.tif")
