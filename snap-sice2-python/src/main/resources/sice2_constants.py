@@ -11,6 +11,9 @@ import pandas as pd
 
 bandcoord = ("band", np.arange(21))
 
+SNOW_TYPE_FLAG = 'SNOW_TYPE_FLAG'
+POL_TYPE_FLAG = 'POL_TYPE_FLAG'
+
 # OLCI channels
 wls = xr.DataArray(
     [
@@ -67,10 +70,8 @@ bai = xr.DataArray(
     coords=[bandcoord],
 )
 
-
 # BULK ice absorption coefficient at all OLCI channels  (1/nm)
 alpha = 4 * np.pi * bai / wls
-
 
 # ozone vertical optical density  at OLCI channels
 cabsoz = xr.DataArray(
@@ -117,7 +118,6 @@ thv1 = 5.0
 thv2 = 0.07
 # threshold for the total ozone column retrieved
 thv3 = 1000.0
-
 
 # %% Solar flux
 # solar spectrum constants
@@ -679,5 +679,23 @@ coef1, coef2 = analyt_func(0.3, 0.7)
 coef3, coef4 = analyt_func(0.7, 0.865)
 
 mandatory_tif_inputs_for_retrieval = ['r_TOA_01.tif', 'r_TOA_04.tif', 'r_TOA_17.tif', 'r_TOA_21.tif',
-                                  'SZA.tif', 'SAA.tif', 'OZA.tif', 'OAA.tif',
-                                  'O3.tif', 'height.tif']
+                                      'SZA.tif', 'SAA.tif', 'OZA.tif', 'OAA.tif',
+                                      'O3.tif', 'height.tif']
+
+pol_type_flags_map = {
+    str(0.0): 1,
+    str(1.0): 2,
+    str(2.0): 4,
+    str(3.0): 8
+}
+
+snow_type_flags_map = {
+    str(1.0): 1,
+    str(2.0): 2,
+    str(3.0): 4,
+    str(100.0): 8,
+    str(102.0): 16,
+    str(103.0): 32,
+    str(104.0): 64,
+    str(105.0): 128
+}

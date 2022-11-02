@@ -14,6 +14,7 @@ import xarray as xr
 
 import esa_snappy
 from esa_snappy import ProductIO
+from esa_snappy import FlagCoding
 
 # If a Java type is needed which is not imported by snappy by default it can be retrieved manually.
 # First import jpy
@@ -25,6 +26,9 @@ import sice2_v21_utils
 
 Float = jpy.get_type('java.lang.Float')
 Color = jpy.get_type('java.awt.Color')
+
+BitSetter = jpy.get_type('org.esa.snap.core.util.BitSetter')
+BandMathsType = jpy.get_type('org.esa.snap.core.datamodel.Mask$BandMathsType')
 
 
 class Sice2V21Op:
@@ -179,10 +183,12 @@ class Sice2V21Op:
         self.cv2_band.setNoDataValue(Float.NaN)
         self.cv2_band.setNoDataValueUsed(True)
 
-        self.pol_type_band = snow_product.addBand('pol_type', esa_snappy.ProductData.TYPE_FLOAT32)
+        self.pol_type_band = snow_product.addBand('pol_type', esa_snappy.ProductData.TYPE_INT16)
         self.pol_type_band.setDescription('Type of pollutant: 1(soot), 2( dust), 3 and 4 (other or mixture)')
-        self.pol_type_band.setNoDataValue(Float.NaN)
-        self.pol_type_band.setNoDataValueUsed(True)
+        pol_type_flag_coding = self.create_pol_type_flag_coding(sice2_constants.POL_TYPE_FLAG)
+        self.pol_type_band.setSampleCoding(pol_type_flag_coding)
+        snow_product.getFlagCodingGroup().add(pol_type_flag_coding)
+        self.create_pol_type_bitmask(snow_product)
 
         self.impurity_load_band = snow_product.addBand('impurity_load', esa_snappy.ProductData.TYPE_FLOAT32)
         self.impurity_load_band.setDescription('Pollutant load')
@@ -202,6 +208,38 @@ class Sice2V21Op:
             r_brr_band = snow_product.addBand('rBRR_' + str(i + 1).zfill(2),
                                               esa_snappy.ProductData.TYPE_FLOAT32)
             self.r_brr_bands.append(r_brr_band)
+
+
+    def create_pol_type_flag_coding(self, flag_id):
+        pol_type_flag_coding = esa_snappy.FlagCoding(flag_id)
+        pol_type_flag_coding.addFlag("SOOT", BitSetter.setFlag(0, 0), "Soot")
+        pol_type_flag_coding.addFlag("DUST", BitSetter.setFlag(0, 1), "Dust")
+        pol_type_flag_coding.addFlag("OTHER", BitSetter.setFlag(0, 2), "Other")
+        pol_type_flag_coding.addFlag("MIXTURE", BitSetter.setFlag(0, 3), "Mixture")
+
+        return pol_type_flag_coding
+
+
+    def create_pol_type_bitmask(self, snow_product):
+        index = 0
+        w = self.width
+        h = self.height
+
+        mask = BandMathsType.create("SOOT", "Soot", w, h, "pol_type.SOOT", Color.MAGENTA, 0.5)
+        snow_product.getMaskGroup().add(index, mask)
+        index = index + 1
+
+        mask = BandMathsType.create("DUST", "Dust", w, h, "pol_type.DUST", Color.RED, 0.5)
+        snow_product.getMaskGroup().add(index, mask)
+        index = index + 1
+
+        mask = BandMathsType.create("OTHER", "Other", w, h, "pol_type.OTHER", Color.YELLOW, 0.5)
+        snow_product.getMaskGroup().add(index, mask)
+        index = index + 1
+
+        mask = BandMathsType.create("MIXTURE", "Mixture", w, h, "pol_type.MIXTURE", Color.ORANGE, 0.5)
+        snow_product.getMaskGroup().add(index, mask)
+
 
     def computeTileStack(self, context, target_tiles, target_rectangle):
 
@@ -306,6 +344,10 @@ class Sice2V21Op:
         target_tiles.get(self.o3_sice_band).setSamples(o3_sice_data)
         target_tiles.get(self.cv1_band).setSamples(cv1_data)
         target_tiles.get(self.cv2_band).setSamples(cv2_data)
+
+        # src_ref_variable_arr[np.where(src_vza_variable_arr > float(config_vza_max_valid))] = np.nan
+        for key in sice2_constants.pol_type_flags_map:
+            pol_type_data[np.where(pol_type_data == float(key))] = sice2_constants.pol_type_flags_map[key]
         target_tiles.get(self.pol_type_band).setSamples(pol_type_data)
         target_tiles.get(self.impurity_load_band).setSamples(impurity_load_data)
 
