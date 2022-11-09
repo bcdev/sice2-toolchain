@@ -21,11 +21,22 @@
              can be specified by referencing them with the here defined names.
          -->
         <sourceProduct>
-            <name>source</name>
+            <name>l1bProduct</name>
+        </sourceProduct>
+        <sourceProduct>
+            <name>cloudProduct</name>
+            <optional>true</optional>
         </sourceProduct>
     </namedSourceProducts>
 
     <parameters>
+        <parameter>
+            <name>writeSpectralAlbedos</name>
+            <description>If selected, spectral albedos and BRRs are written to the target product.</description>
+            <label>Write spectral albedos</label>
+            <dataType>java.lang.Boolean</dataType>
+            <defaultValue>true</defaultValue>
+        </parameter>
     </parameters>
 
 </operator>

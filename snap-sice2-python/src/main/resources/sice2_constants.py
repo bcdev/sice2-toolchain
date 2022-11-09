@@ -754,6 +754,10 @@ OLCI_L2_IPF_BITMASK_FLAG_CODING_DICT = {
     'WQSF.RWNEG_O21': 36028797018963968
 }
 
+IDEPIX_PROCESSOR_ID = 'IDEPIX'
+
+IDEPIX_FLAG_BAND_NAME = 'pixel_classif_flags'
+
 IDEPIX_BITMASK_FLAG_CODING_DICT = {
     'pixel_classif_flags.IDEPIX_INVALID': 1,
     'pixel_classif_flags.IDEPIX_CLOUD': 2,
@@ -768,3 +772,11 @@ IDEPIX_BITMASK_FLAG_CODING_DICT = {
     'pixel_classif_flags.IDEPIX_LAND': 1024,
     'pixel_classif_flags.IDEPIX_MOUNTAIN_SHADOW': 2048
 }
+
+DEFAULT_IDEPIX_VALID_PIXEL_EXPR = 'not pixel_classif_flags.IDEPIX_INVALID ' \
+                                  'and not pixel_classif_flags.IDEPIX_CLOUD ' \
+                                  'and not pixel_classif_flags.IDEPIX_CLOUD_AMBIGUOUS ' \
+                                  'and not pixel_classif_flags.IDEPIX_CLOUD_SURE ' \
+                                  'and not pixel_classif_flags.IDEPIX_CLOUD_BUFFER ' \
+                                  'and not pixel_classif_flags.IDEPIX_CLOUD_SHADOW ' \
+                                  'and not pixel_classif_flags.IDEPIX_MOUNTAIN_SHADOW '

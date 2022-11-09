@@ -11,6 +11,7 @@ import numpy as np
 import xarray as xr
 
 import esa_snappy
+from esa_snappy import ProductData
 from esa_snappy import ProductIO
 from esa_snappy import FlagCoding
 
@@ -64,35 +65,51 @@ class Sice2V21Op:
         print('sys.version_info > (3, 0): ' + str(sys.version_info > (3, 0)))
 
         # Via the context object the source product which shall be processed can be retrieved
-        source_product = context.getSourceProduct('source')
-        print('initialize: source product location is', source_product.getFileLocation())
+        self.source_product = context.getSourceProduct('l1bProduct')
+        self.cloud_product = context.getSourceProduct('cloudProduct')
+        print('initialize: source product location is', self.source_product.getFileLocation())
+        if self.cloud_product is not None:
+            print('initialize: cloud product location is', self.cloud_product.getFileLocation())
+
+        self.write_spectral_albedos = context.getParameter('writeSpectralAlbedos')
 
         self.called_compute_tile_stack = 0
 
-        self.width = source_product.getSceneRasterWidth()
-        self.height = source_product.getSceneRasterHeight()
+        self.width = self.source_product.getSceneRasterWidth()
+        self.height = self.source_product.getSceneRasterHeight()
 
         #####
-        self.sza_band = self._get_band(source_product, "SZA")
-        self.saa_band = self._get_band(source_product, "SAA")
-        self.vza_band = self._get_band(source_product, "OZA")
-        self.vaa_band = self._get_band(source_product, "OAA")
-        self.total_ozone_band = self._get_band(source_product, "total_ozone")
-        self.altitude_band = self._get_band(source_product, "altitude")
+        self.input_products_all_band_names = []
+        for i in range(len(self.source_product.getBands())):
+            self.input_products_all_band_names.append(self.source_product.getBandAt(i).getName())
+        for i in range(len(self.source_product.getTiePointGrids())):
+            self.input_products_all_band_names.append(self.source_product.getTiePointGridAt(i).getName())
+        if self.cloud_product is not None:
+            for i in range(len(self.cloud_product.getBands())):
+                self.input_products_all_band_names.append(self.cloud_product.getBandAt(i).getName())
+            for i in range(len(self.cloud_product.getTiePointGrids())):
+                self.input_products_all_band_names.append(self.cloud_product.getTiePointGridAt(i).getName())
 
-        self.latitude_band = self._get_band(source_product, "latitude")
-        self.longitude_band = self._get_band(source_product, "longitude")
+        self.sza_band = self._get_band(self.source_product, "SZA")
+        self.saa_band = self._get_band(self.source_product, "SAA")
+        self.vza_band = self._get_band(self.source_product, "OZA")
+        self.vaa_band = self._get_band(self.source_product, "OAA")
+        self.total_ozone_band = self._get_band(self.source_product, "total_ozone")
+        self.altitude_band = self._get_band(self.source_product, "altitude")
+
+        self.latitude_band = self._get_band(self.source_product, "latitude")
+        self.longitude_band = self._get_band(self.source_product, "longitude")
 
         self.radiance_bands = []
         self.radiance_band_names = [f'Oa{i:02}_radiance' for i in range(1, sice2_constants.OLCI_NUM_SPECTRAL_BANDS + 1)]
         for i in range(1, len(self.radiance_band_names) + 1):
-            self.radiance_bands.append(self._get_band(source_product, self.radiance_band_names[i - 1]))
+            self.radiance_bands.append(self._get_band(self.source_product, self.radiance_band_names[i - 1]))
 
         self.solar_flux_bands = []
         self.solar_flux_band_names = [f'solar_flux_band_{i:01}' for i in
                                       range(1, sice2_constants.OLCI_NUM_SPECTRAL_BANDS + 1)]
         for i in range(1, len(self.solar_flux_band_names) + 1):
-            self.solar_flux_bands.append(self._get_band(source_product, self.solar_flux_band_names[i - 1]))
+            self.solar_flux_bands.append(self._get_band(self.source_product, self.solar_flux_band_names[i - 1]))
 
         # Create the target product
         snow_product = esa_snappy.Product('py_SICE21_snow', 'py_SICE21_snow', self.width, self.height)
@@ -100,10 +117,10 @@ class Sice2V21Op:
         self.pref_tile_height = 1000
         snow_product.setPreferredTileSize(self.pref_tile_width, self.pref_tile_height)
         self.num_tiles_to_process = ceil(self.width / self.pref_tile_width) * ceil(self.height / self.pref_tile_height)
-        esa_snappy.ProductUtils.copyGeoCoding(source_product, snow_product)
-        esa_snappy.ProductUtils.copyMetadata(source_product, snow_product)
-        snow_product.setStartTime(source_product.getStartTime())
-        snow_product.setEndTime(source_product.getEndTime())
+        esa_snappy.ProductUtils.copyGeoCoding(self.source_product, snow_product)
+        esa_snappy.ProductUtils.copyMetadata(self.source_product, snow_product)
+        snow_product.setStartTime(self.source_product.getStartTime())
+        snow_product.setEndTime(self.source_product.getEndTime())
         snow_product.setAutoGrouping("albedo_spectral_spherical:albedo_spectral_planar:rBRR")
 
         context.setTargetProduct(snow_product)
@@ -196,19 +213,29 @@ class Sice2V21Op:
         self.impurity_load_band.setNoDataValue(Float.NaN)
         self.impurity_load_band.setNoDataValueUsed(True)
 
-        self.albedo_spectral_spherical_bands = []
-        self.albedo_spectral_planar_bands = []
-        self.r_brr_bands = []
-        for i in np.append(np.arange(11), np.arange(15, sice2_constants.OLCI_NUM_SPECTRAL_BANDS)):
-            albedo_spectral_spherical_band = snow_product.addBand('albedo_spectral_spherical_' + str(i + 1).zfill(2),
-                                                                  esa_snappy.ProductData.TYPE_FLOAT32)
-            self.albedo_spectral_spherical_bands.append(albedo_spectral_spherical_band)
-            albedo_spectral_planar_band = snow_product.addBand('albedo_spectral_planar_' + str(i + 1).zfill(2),
-                                                               esa_snappy.ProductData.TYPE_FLOAT32)
-            self.albedo_spectral_planar_bands.append(albedo_spectral_planar_band)
-            r_brr_band = snow_product.addBand('rBRR_' + str(i + 1).zfill(2),
-                                              esa_snappy.ProductData.TYPE_FLOAT32)
-            self.r_brr_bands.append(r_brr_band)
+        if self.write_spectral_albedos:
+            self.albedo_spectral_spherical_bands = []
+            self.albedo_spectral_planar_bands = []
+            self.r_brr_bands = []
+            for i in np.append(np.arange(11), np.arange(15, sice2_constants.OLCI_NUM_SPECTRAL_BANDS)):
+                albedo_spectral_spherical_band = snow_product.addBand('albedo_spectral_spherical_' + str(i + 1).zfill(2),
+                                                                      esa_snappy.ProductData.TYPE_FLOAT32)
+                albedo_spectral_spherical_band.setDescription('Spectral spherical albedo')
+                albedo_spectral_spherical_band.setNoDataValue(Float.NaN)
+                albedo_spectral_spherical_band.setNoDataValueUsed(True)
+                self.albedo_spectral_spherical_bands.append(albedo_spectral_spherical_band)
+                albedo_spectral_planar_band = snow_product.addBand('albedo_spectral_planar_' + str(i + 1).zfill(2),
+                                                                   esa_snappy.ProductData.TYPE_FLOAT32)
+                albedo_spectral_planar_band.setDescription('Spectral planar albedo')
+                albedo_spectral_planar_band.setNoDataValue(Float.NaN)
+                albedo_spectral_planar_band.setNoDataValueUsed(True)
+                self.albedo_spectral_planar_bands.append(albedo_spectral_planar_band)
+                r_brr_band = snow_product.addBand('rBRR_' + str(i + 1).zfill(2),
+                                                  esa_snappy.ProductData.TYPE_FLOAT32)
+                r_brr_band.setDescription('Bottom-of-Rayleigh reflectance')
+                r_brr_band.setNoDataValue(Float.NaN)
+                r_brr_band.setNoDataValueUsed(True)
+                self.r_brr_bands.append(r_brr_band)
 
     def computeTileStack(self, context, target_tiles, target_rectangle):
 
@@ -220,6 +247,15 @@ class Sice2V21Op:
         print('target_rectangle.height =' + str(target_rectangle.height))
         self.called_compute_tile_stack = self.called_compute_tile_stack + 1
         print('Tile ' + str(self.called_compute_tile_stack) + ' of ' + str(self.num_tiles_to_process))
+
+        # filter invalid (i.e. cloudy) pixels:
+        valid_expression_filter_array = self.setup_valid_expression_filter(sice2_constants.IDEPIX_PROCESSOR_ID,
+                                                                           context,
+                                                                           target_rectangle,
+                                                                           sice2_constants.IDEPIX_FLAG_BAND_NAME,
+                                                                           sice2_constants.DEFAULT_IDEPIX_VALID_PIXEL_EXPR,
+                                                                           sice2_constants.IDEPIX_BITMASK_FLAG_CODING_DICT,
+                                                                           num_pixels)
 
         sza_tile = context.getSourceTile(self.sza_band, target_rectangle)
         saa_tile = context.getSourceTile(self.saa_band, target_rectangle)
@@ -250,6 +286,7 @@ class Sice2V21Op:
             var_name = variables[variable][0]
             var_unit = variables[variable][1]
             var_data = variables[variable][2]
+            var_data[np.where(~valid_expression_filter_array)] = np.nan
             olci_scene[var_name] = self._get_var(var_data, target_rectangle.width, target_rectangle.height, var_data,
                                                  var_unit)
 
@@ -264,6 +301,7 @@ class Sice2V21Op:
 
             _rad = self._get_var(rad_data, target_rectangle.width, target_rectangle.height, bands[i], 'dl')
             _toa = (_rad * np.pi) / (solar_flux_data * np.cos(np.deg2rad(sza_data)))
+            _toa[np.where(~valid_expression_filter_array)] = np.nan
             toa.append(np.clip(_toa, 0, 1))
         olci_scene['toa'] = xr.concat(toa, dim='band')
 
@@ -288,13 +326,14 @@ class Sice2V21Op:
         pol_type_data = snow['ntype'].values
         impurity_load_data = snow['aload_ppm'].values
 
-        albedo_spectral_spherical_data = []
-        albedo_spectral_planar_data = []
-        r_brr_data = []
-        for i in np.append(np.arange(11), np.arange(15, sice2_constants.OLCI_NUM_SPECTRAL_BANDS)):
-            albedo_spectral_spherical_data.append(snow.alb_sph.sel(band=i).values)
-            albedo_spectral_planar_data.append(snow.rp.sel(band=i).values)
-            r_brr_data.append(snow.refl.sel(band=i).values)
+        if self.write_spectral_albedos:
+            albedo_spectral_spherical_data = []
+            albedo_spectral_planar_data = []
+            r_brr_data = []
+            for i in np.append(np.arange(11), np.arange(15, sice2_constants.OLCI_NUM_SPECTRAL_BANDS)):
+                albedo_spectral_spherical_data.append(snow.alb_sph.sel(band=i).values)
+                albedo_spectral_planar_data.append(snow.rp.sel(band=i).values)
+                r_brr_data.append(snow.refl.sel(band=i).values)
 
         # The target tiles which shall be filled with data are provided as parameter to this method
         # Set the results to the target tiles
@@ -315,10 +354,11 @@ class Sice2V21Op:
             isnow_data[np.where(isnow_data == float(key))] = sice2_constants.snow_type_flags_map[key]
         target_tiles.get(self.isnow_band).setSamples(isnow_data)
 
-        for i in range(sice2_constants.OLCI_NUM_SPECTRAL_BANDS - 4):
-            target_tiles.get(self.albedo_spectral_spherical_bands[i]).setSamples(albedo_spectral_spherical_data[i])
-            target_tiles.get(self.albedo_spectral_planar_bands[i]).setSamples(albedo_spectral_planar_data[i])
-            target_tiles.get(self.r_brr_bands[i]).setSamples(r_brr_data[i])
+        if self.write_spectral_albedos:
+            for i in range(sice2_constants.OLCI_NUM_SPECTRAL_BANDS - 4):
+                target_tiles.get(self.albedo_spectral_spherical_bands[i]).setSamples(albedo_spectral_spherical_data[i])
+                target_tiles.get(self.albedo_spectral_planar_bands[i]).setSamples(albedo_spectral_planar_data[i])
+                target_tiles.get(self.r_brr_bands[i]).setSamples(r_brr_data[i])
 
     def dispose(self, operator):
         """
@@ -361,3 +401,39 @@ class Sice2V21Op:
                    'unit': unit}
         )
         return data_da.compute().stack(xy=("x", "y"))
+
+    def setup_valid_expression_filter(self, cloud_processor, context, rect, flagname, expr, flag_coding_dict,
+                                      num_pixels):
+        """
+
+        :param context:
+        :param rect:
+        :param flagname:
+        :param expr:
+        :param flag_coding_dict:
+        :param num_pixels:
+        :return:
+        """
+        # identify which of the product variables are in the valid expr...
+        variables_in_expr_dict = {}
+        if self.cloud_product is not None and cloud_processor == sice2_constants.IDEPIX_PROCESSOR_ID:
+            # we only support Idepix for the moment
+            condition = sice2_v21_utils.get_condition_from_valid_pixel_expr(flagname, expr, flag_coding_dict)
+            for name in self.input_products_all_band_names:
+                if name in expr:
+                    if self.source_product.containsBand(name):
+                        _band = self.source_product.getBand(name)
+                    else:
+                        _band = self.cloud_product.getBand(name)
+                    _tile = context.getSourceTile(_band, rect)
+                    if ProductData.isIntType(_band.getDataType()):
+                        variables_in_expr_dict[name] = np.array(_tile.getSamplesInt(), dtype=np.int32)
+                    elif ProductData.isFloatingPointType(_band.getDataType()):
+                        variables_in_expr_dict[name] = np.array(_tile.getSamplesFloat(), dtype=np.float32)
+                    variables_in_expr_dict[name] = np.reshape(variables_in_expr_dict[name], (rect.width, rect.height))
+
+            return sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict,
+                                                                     rect.width, rect.height).flatten()
+        else:
+            # no filtering
+            return np.full((rect.width * rect.height), True)

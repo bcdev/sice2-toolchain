@@ -122,7 +122,7 @@ class TestSice2(unittest.TestCase):
 
         variables_in_expr_dict = {'WQSF': wqsf_arr, 'Oa10_reflectance': oa10_reflectance_arr}
 
-        filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3)
+        filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
         expected_arr = np.array([[False, False, True], [True, False, False], [True, False, True]])
         self.assertSequenceEqual(filter_array.tolist(), expected_arr.tolist())
 
@@ -139,7 +139,7 @@ class TestSice2(unittest.TestCase):
 
         variables_in_expr_dict = {'pixel_classif_flags': idepix_arr, 'Oa10_reflectance': oa10_reflectance_arr}
 
-        filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3)
+        filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
         expected_arr = np.array([[True, True, True], [True, False, True], [True, True, True]])
         self.assertSequenceEqual(filter_array.tolist(), expected_arr.tolist())
 
