@@ -286,7 +286,6 @@ class Sice2V21Op:
             var_name = variables[variable][0]
             var_unit = variables[variable][1]
             var_data = variables[variable][2]
-            var_data[np.where(~valid_expression_filter_array)] = np.nan
             olci_scene[var_name] = self._get_var(var_data, target_rectangle.width, target_rectangle.height, var_data,
                                                  var_unit)
 

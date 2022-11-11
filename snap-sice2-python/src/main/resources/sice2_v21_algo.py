@@ -423,7 +423,7 @@ def prepare_coef_numpy(tau, g, p, cos_sza, cos_vza, inv_cos_za, gaer, taumol, ta
     Baer[gaer >= 0.001] = (
             (1 - gaer) * ((1 + gaer) / np.sqrt(1.0 + gaer ** 2) - 1) / 2 / gaer
     )
-    B = (0.5 * taumol +(Baer * tauaer.transpose()).transpose()) / tau
+    B = (0.5 * taumol + (Baer * tauaer.transpose()).transpose()) / tau
     t1t2 = np.exp(-B * tau / cos_sza) * np.exp(-B * tau / cos_vza)
 
     # atmospheric spherical albedo (updated 2022)
@@ -1090,8 +1090,8 @@ def process(OLCI_scene, compute_polluted=True, no_qc=False, no_oz=False, **kwarg
     OLCI_scene, angles, snow = snow_properties(OLCI_scene, angles, snow)
     if 'aot' not in OLCI_scene.keys():
         print('Using default AOT value')
-        OLCI_scene['aot'] = OLCI_scene.sza*0 + 0.07
-        OLCI_scene['aer_ang'] = OLCI_scene.sza*0 + 1.3
+        OLCI_scene['aot'] = OLCI_scene.sza * 0 + 0.07
+        OLCI_scene['aer_ang'] = OLCI_scene.sza * 0 + 1.3
 
     aerosol = aerosol_properties(OLCI_scene.elevation, angles.cos_sa, OLCI_scene.aot, OLCI_scene.aer_ang)
     atmosphere = prepare_coef(aerosol, angles)
@@ -1127,15 +1127,13 @@ def process_by_chunk(
 ):
     size = OLCI_scene.sza.shape[0]
     nchunks = int(max(np.floor(size / chunk_size), 1))
-    # OLCI_chunks = OLCI_scene.chunk({"band": 21, "xy": chunk_size})
     OLCI_chunks = OLCI_scene.chunk({"band": sice2_constants.OLCI_NUM_SPECTRAL_BANDS, "xy": chunk_size})
-    # snow_chunks = OLCI_chunks.map_blocks(process,kwargs={}, template = snow_template)
     xy_chunk_indexes = np.append(0, np.array(OLCI_chunks.chunks["xy"]).cumsum())
 
     snow = xr.Dataset()
 
     for i in range(len(xy_chunk_indexes) - 1):
-        print(f"{i+1} / {nchunks+1}")
+        print(f"{i + 1} / {nchunks}")
         # define chunk
         chunk = OLCI_scene.isel(xy=slice(xy_chunk_indexes[i], xy_chunk_indexes[i + 1]))
 
@@ -1154,59 +1152,3 @@ def process_by_chunk(
 
     return snow
 
-
-# def main():
-#     # debug:
-#     # InputPath = '../data/5_km_res/'
-#     # OutputFolder = '../data/5_km_res/pySICEv2.1_qc'
-#     # import argparse
-#     # args = argparse.ArgumentParser()
-#     # args.clean_snow = False
-#     # args.no_qc = False
-#     # args.no_oz = False
-#
-#     args = parse_args(sys.argv[1:])
-#     InputPath = get_input_folder(args)
-#     OutputFolder = get_output_folder(args)
-#     if args.clean_snow:
-#         print("Retrieving all pixels as clean snow")
-#         args.no_qc = True
-#         args.no_oz = True
-#     if args.no_qc:
-#         print("No quality check")
-#     if args.no_oz:
-#         print("No ozone retrieval")
-#
-#     print("Start pysice.py")
-#     print("Input folder:", InputPath)
-#     print("Output folder:", OutputFolder)
-#
-#     OLCI_reader = sice_io(InputPath)
-#     OLCI_reader.open()
-#     OLCI_scene = OLCI_reader.olci_scene
-#
-#     start_time = time.process_time()
-#
-#     if len(OLCI_scene.xy) < 1000000:
-#         snow = process(
-#             OLCI_scene,
-#             compute_polluted=not args.clean_snow,
-#             no_qc=args.no_qc,
-#             no_oz=args.no_oz,
-#         )
-#     else:
-#         snow = process_by_chunk(
-#             OLCI_scene,
-#             chunk_size=500000,
-#             compute_polluted=not args.clean_snow,
-#             no_qc=args.no_qc,
-#             no_oz=args.no_oz,
-#         )
-#
-#     duration = time.process_time() - start_time
-#     print("Time elapsed: ", duration)
-#     write_output(snow, OutputFolder, OLCI_reader.dirname)
-#
-#
-# if __name__ == "__main__":
-#     main()
