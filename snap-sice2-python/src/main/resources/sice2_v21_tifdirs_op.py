@@ -61,11 +61,9 @@ class Sice2V21TifdirsOp:
 
         # Tif directory parameter defined in ndsi_op-info.xml
         self.tif_input_directory = context.getParameter('tifInputDir')
-        self.tif_output_directory = context.getParameter('tifOutputDir')
 
         print('Start sice.py')
         print('Input folder:', self.tif_input_directory)
-        print('Output folder:', self.tif_output_directory)
 
         self.called_compute_tile_stack = 0
 

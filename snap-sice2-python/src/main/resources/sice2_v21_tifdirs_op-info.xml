@@ -35,17 +35,6 @@
             <!-- An empty parameter is not allowed -->
             <notEmpty>true</notEmpty>
         </parameter>
-        <parameter>
-            <name>tifOutputDir</name>
-            <description>The directory containing the output tif files.</description>
-            <label>Output tif file directory</label>
-            <dataType>java.lang.String</dataType>
-            <defaultValue>.</defaultValue>
-            <!-- An empty parameter is not allowed -->
-            <notEmpty>true</notEmpty>
-        </parameter>
-
-
     </parameters>
 
 </operator>
