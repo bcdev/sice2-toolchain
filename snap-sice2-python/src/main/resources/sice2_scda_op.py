@@ -27,7 +27,7 @@ Float = jpy.get_type('java.lang.Float')
 Color = jpy.get_type('java.awt.Color')
 
 
-class Sice2V21TifdirsOp:
+class Sice2ScdaOp:
     """
     The Sice2 GPF operator
 
@@ -60,21 +60,21 @@ class Sice2V21TifdirsOp:
         print('sys.version_info > (3, 0): ' + str(sys.version_info > (3, 0)))
 
         # Tif directory parameter defined in ndsi_op-info.xml
-        tif_input_directory = context.getParameter('tifInputDir')
+        self.tif_input_directory = context.getParameter('tifInputDir')
 
         print('Start sice.py')
-        print('Input folder:', tif_input_directory)
+        print('Input folder:', self.tif_input_directory)
 
         self.called_compute_tile_stack = 0
 
-        tif_source_product_paths = sice2_v21_utils.get_tif_source_product_paths(tif_input_directory)
+        tif_source_product_paths = sice2_v21_utils.get_tif_source_product_paths(self.tif_input_directory)
 
-        sza_product = ProductIO.readProduct(tif_input_directory + os.sep + "SZA.tif")
-        saa_product = ProductIO.readProduct(tif_input_directory + os.sep + "SAA.tif")
-        vza_product = ProductIO.readProduct(tif_input_directory + os.sep + "OZA.tif")
-        vaa_product = ProductIO.readProduct(tif_input_directory + os.sep + "OAA.tif")
-        total_ozone_product = ProductIO.readProduct(tif_input_directory + os.sep + "O3.tif")
-        altitude_product = ProductIO.readProduct(tif_input_directory + os.sep + "height.tif")
+        sza_product = ProductIO.readProduct(self.tif_input_directory + os.sep + "SZA.tif")
+        saa_product = ProductIO.readProduct(self.tif_input_directory + os.sep + "SAA.tif")
+        vza_product = ProductIO.readProduct(self.tif_input_directory + os.sep + "OZA.tif")
+        vaa_product = ProductIO.readProduct(self.tif_input_directory + os.sep + "OAA.tif")
+        total_ozone_product = ProductIO.readProduct(self.tif_input_directory + os.sep + "O3.tif")
+        altitude_product = ProductIO.readProduct(self.tif_input_directory + os.sep + "height.tif")
 
         self.width = sza_product.getSceneRasterWidth()
         self.height = sza_product.getSceneRasterHeight()
@@ -90,7 +90,7 @@ class Sice2V21TifdirsOp:
         self.rtoa_bands = []
         self.rtoa_file_names = [f'r_TOA_{i:02}' for i in range(1, sice2_constants.OLCI_NUM_SPECTRAL_BANDS + 1)]
         for i in range(1, len(self.rtoa_file_names) + 1):
-            rtoa_path = tif_input_directory + os.sep + self.rtoa_file_names[i - 1] + '.tif'
+            rtoa_path = self.tif_input_directory + os.sep + self.rtoa_file_names[i - 1] + '.tif'
             if rtoa_path in tif_source_product_paths:
                 rtoa_product = ProductIO.readProduct(rtoa_path)
                 self.rtoa_bands.append(self._get_band(rtoa_product, "band_1"))

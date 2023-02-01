@@ -12,4 +12,6 @@ sice2_test_esasnappy_op.Sice2TestEsasnappyOp
 sice2_test_satpy_op.Sice2TestSatpyOp
 sice2_v2_op.Sice2V2Op
 sice2_v21_tifdirs_op.Sice2V21TifdirsOp
+sice2_scda_tifdirs_op.Sice2ScdaTifdirsOp
 sice2_v21_op.Sice2V21Op
+sice2_scda_op.Sice2ScdaOp

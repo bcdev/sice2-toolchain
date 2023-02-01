@@ -143,6 +143,33 @@ class TestSice2(unittest.TestCase):
         expected_arr = np.array([[True, True, True], [True, False, True], [True, True, True]])
         self.assertSequenceEqual(filter_array.tolist(), expected_arr.tolist())
 
+    def test_compare_bool_arrays(self):
+        my_bool_arr = np.array([[False, True], [True, False], [True, True]])
+
+        x_1 = np.where(my_bool_arr == True, 255.0, 1.0)
+        self.assertEqual(6, x_1.size)
+        self.assertEqual(2, len(x_1.shape))
+        self.assertEqual(3, x_1.shape[0])
+        self.assertEqual(2, x_1.shape[1])
+        self.assertEqual(255.0, x_1[0][1])
+        self.assertEqual(1.0, x_1[1][1])
+        self.assertEqual(255.0, x_1[2][1])
+
+        x_2 = np.where(my_bool_arr, 99.0, -1.0)
+        self.assertEqual(6, x_2.size)
+        self.assertEqual(2, len(x_2.shape))
+        self.assertEqual(3, x_2.shape[0])
+        self.assertEqual(2, x_2.shape[1])
+        self.assertEqual(99.0, x_2[0][1])
+        self.assertEqual(-1.0, x_2[1][1])
+        self.assertEqual(99.0, x_2[2][1])
+
+        # BUT you can't compare like this.
+        # x_3 is an array of size 1, empty shape, and value -2.0 assigned to 'False' case:
+        x_3 = np.where(my_bool_arr is True, 66.0, -2.0)
+        self.assertEqual(1, x_3.size)
+        self.assertEqual(0, len(x_3.shape))
+        self.assertEqual(-2.0, x_3)
 
 # suite = unittest.TestLoader().loadTestsFromTestCase(TestSice2)
 # unittest.TextTestRunner(verbosity=2).run(suite)
