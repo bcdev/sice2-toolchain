@@ -1,6 +1,9 @@
 import sys
 import os
 
+# for SNAPPY usage see
+# https://senbox.atlassian.net/wiki/spaces/SNAP/pages/19300362/How+to+use+the+SNAP+API+from+Python
+
 sys.path.append(os.path.expanduser('~') + os.sep + '.snap' + os.sep + 'snap-python')
 import esa_snappy
 # If a Java type is needed which is not imported by snappy by default it can be retrieved manually.
