@@ -4,34 +4,6 @@
 
     <folder name="Actions">
 
-<!--        <folder name="Operators">-->
-<!--            <file name="PySice2TestOpAction.instance">-->
-<!--                <attr name="instanceCreate"-->
-<!--                      methodvalue="org.openide.awt.Actions.alwaysEnabled"/>-->
-<!--                <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>-->
-<!--                <attr name="operatorName" stringvalue="py_sice2_test_op"/>-->
-<!--                <attr name="displayName" stringvalue="SICE2 Test (Python)"/>-->
-<!--                <attr name="dialogTitle" stringvalue="SICE2 Test (Python)"/>-->
-<!--                <attr name="helpId" stringvalue="pySice2TestDoc"/>  &lt;!&ndash;The helpId if help contents is provided&ndash;&gt;-->
-<!--                <attr name="targetProductNameSuffix" stringvalue="_sice2test_py"/>-->
-<!--                <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 Snow Retrieval."/>-->
-<!--            </file>-->
-<!--        </folder>-->
-
-<!--        <folder name="Operators">-->
-<!--            <file name="PySice2OpAction.instance">-->
-<!--                <attr name="instanceCreate"-->
-<!--                      methodvalue="org.openide.awt.Actions.alwaysEnabled"/>-->
-<!--                <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>-->
-<!--                <attr name="operatorName" stringvalue="py_sice2_op"/>-->
-<!--                <attr name="displayName" stringvalue="SICE2 (Python)"/>-->
-<!--                <attr name="dialogTitle" stringvalue="SICE2 (Python)"/>-->
-<!--                <attr name="helpId" stringvalue="pySice2Doc"/>  &lt;!&ndash;The helpId if help contents is provided&ndash;&gt;-->
-<!--                <attr name="targetProductNameSuffix" stringvalue="_sice2_py"/>-->
-<!--                <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 Snow Retrieval."/>-->
-<!--            </file>-->
-<!--        </folder>-->
-
         <folder name="Operators">
             <file name="Sice2V21OpAction.instance">
                 <attr name="instanceCreate"
@@ -59,22 +31,40 @@
                 <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 v2.1 Snow Retrieval. Special version reading from TIF directories."/>
             </file>
         </folder>
+
+        <folder name="Operators">
+            <file name="Sice2ScdaOpAction.instance">
+                <attr name="instanceCreate"
+                      methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
+                <attr name="operatorName" stringvalue="py_sice2_scda_op"/>
+                <attr name="displayName" stringvalue="SICE2 SCDA (Python)"/>
+                <attr name="dialogTitle" stringvalue="SICE2 SCDA (Python)"/>
+                <attr name="helpId" stringvalue="pySice2Doc"/>  <!--The helpId if help contents is provided-->
+                <attr name="targetProductNameSuffix" stringvalue="_sice2_scda"/>
+                <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 SCDA cloud masking."/>
+            </file>
+        </folder>
+
+        <folder name="Operators">
+            <file name="Sice2ScdaTifdirsOpAction.instance">
+                <attr name="instanceCreate"
+                      methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
+                <attr name="operatorName" stringvalue="py_sice2_scda_tifdirs_op"/>
+                <attr name="displayName" stringvalue="SICE2 SCDA from TIFs (Python)"/>
+                <attr name="dialogTitle" stringvalue="SICE2 SCDA from TIFs (Python)"/>
+                <attr name="helpId" stringvalue="pySice2Doc"/>  <!--The helpId if help contents is provided-->
+                <attr name="targetProductNameSuffix" stringvalue="_sice2_scda"/>
+                <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 SCDA cloud masking. Special version reading from TIF directories."/>
+            </file>
+        </folder>
+
     </folder>
 
     <folder name="Menu">
         <folder name="Optical">
             <folder name="Thematic Land Processing">
-<!--                <file name="PySice2TestOpAction.shadow">-->
-<!--                    <attr name="originalFile"-->
-<!--                          stringvalue="Actions/Operators/PySice2TestOpAction.instance"/>-->
-<!--                    <attr name="position" intvalue="13000"/>-->
-<!--                </file>-->
-
-<!--                <file name="PySice2OpAction.shadow">-->
-<!--                    <attr name="originalFile"-->
-<!--                          stringvalue="Actions/Operators/PySice2OpAction.instance"/>-->
-<!--                    <attr name="position" intvalue="13000"/>-->
-<!--                </file>-->
 
                 <file name="Sice2V21OpAction.shadow">
                     <attr name="originalFile"
@@ -85,6 +75,18 @@
                 <file name="Sice2V21TifdirsOpAction.shadow">
                     <attr name="originalFile"
                           stringvalue="Actions/Operators/Sice2V21TifdirsOpAction.instance"/>
+                    <attr name="position" intvalue="14000"/>
+                </file>
+
+                <file name="Sice2ScdaOpAction.shadow">
+                    <attr name="originalFile"
+                          stringvalue="Actions/Operators/Sice2ScdaOpAction.instance"/>
+                    <attr name="position" intvalue="13000"/>
+                </file>
+
+                <file name="Sice2ScdaTifdirsOpAction.shadow">
+                    <attr name="originalFile"
+                          stringvalue="Actions/Operators/Sice2ScdaTifdirsOpAction.instance"/>
                     <attr name="position" intvalue="14000"/>
                 </file>
             </folder>

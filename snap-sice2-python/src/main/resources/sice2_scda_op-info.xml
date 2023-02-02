@@ -23,18 +23,12 @@
         <!--        <sourceProduct>-->
         <!--            <name>source</name>-->
         <!--        </sourceProduct>-->
+        <sourceProduct>
+            <name>l1bProduct</name>
+        </sourceProduct>
     </namedSourceProducts>
 
     <parameters>
-        <parameter>
-            <name>tifInputDir</name>
-            <description>The directory containing the input tif files.</description>
-            <label>Input tif file directory</label>
-            <dataType>java.lang.String</dataType>
-            <defaultValue>.</defaultValue>
-            <!-- An empty parameter is not allowed -->
-            <notEmpty>true</notEmpty>
-        </parameter>
     </parameters>
 
 </operator>

@@ -7,10 +7,12 @@ import time
 
 import esa_snappy
 import numpy as np
-import xarray as xr
 # If a Java type is needed which is not imported by snappy by default it can be retrieved manually.
 # First import jpy
+from esa_snappy import jpy
 from esa_snappy import ProductIO
+
+Float = jpy.get_type('java.lang.Float')
 
 import scda
 
@@ -36,7 +38,7 @@ class Sice2ScdaTifdirsOp:
         start_time = time.process_time()
 
         resource_root = os.path.dirname(__file__)
-        f = open(tempfile.gettempdir() + '/sice2_scda_py.log', 'w')
+        f = open(tempfile.gettempdir() + '/sice2_scda_tifdirs_op.log', 'w')
 
         sys.path.append(resource_root)
 
@@ -50,7 +52,7 @@ class Sice2ScdaTifdirsOp:
         # Tif directory parameter defined in ndsi_op-info.xml
         tif_input_directory = context.getParameter('tifInputDir')
 
-        print('Start scda.py')
+        print('Start sice2_scda_tifdirs_op...')
         print('Input folder:', tif_input_directory)
 
         self.called_compute_tile_stack = 0
@@ -141,6 +143,14 @@ class Sice2ScdaTifdirsOp:
         # Set the results to the target tiles
         target_tiles.get(self.scda_band).setSamples(scda_data.flatten())
 
+    def dispose(self, operator):
+        """
+        The GPF dispose method. Nothing to do here.
+        :param operator:
+        :return:
+        """
+        pass
+
     @staticmethod
     def _get_band(input_product, band_name):
         """
@@ -160,14 +170,4 @@ class Sice2ScdaTifdirsOp:
                     raise RuntimeError('Product has no band or tpg with name', band_name)
         return band
 
-
-    @staticmethod
-    def _get_var(data, width, height, long_name, unit):
-        data_da = xr.DataArray(
-            data=data.reshape(width, height),
-            dims=["x", "y"],
-            attrs={'long_name': long_name,
-                   'unit': unit}
-        )
-        return data_da.compute().stack(xy=("x", "y"))
 
