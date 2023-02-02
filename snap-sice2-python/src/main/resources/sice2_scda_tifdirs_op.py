@@ -153,8 +153,13 @@ class Sice2ScdaTifdirsOp:
         if not band:
             band = input_product.getTiePointGrid(band_name)
             if not band:
-                raise RuntimeError('Product has no band or tpg with name', band_name)
+                if input_product.getNumBands() == 1:
+                    # special case: check tif files with 1 band named 'band_1'
+                    band = input_product.getBand("band_1")
+                if not band:
+                    raise RuntimeError('Product has no band or tpg with name', band_name)
         return band
+
 
     @staticmethod
     def _get_var(data, width, height, long_name, unit):
@@ -165,3 +170,4 @@ class Sice2ScdaTifdirsOp:
                    'unit': unit}
         )
         return data_da.compute().stack(xy=("x", "y"))
+
