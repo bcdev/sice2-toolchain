@@ -13,6 +13,11 @@ import numpy as np
 # First import jpy
 from esa_snappy import jpy
 
+HashMap = jpy.get_type('java.util.HashMap')
+
+from esa_snappy import ProductIO
+from esa_snappy import GPF
+
 Float = jpy.get_type('java.lang.Float')
 
 import scda
@@ -64,10 +69,22 @@ class Sice2ScdaOp:
         #####
         self.r550_radiance_band = self._get_band(self.source_product, "S1_radiance_an")
         self.r1600_radiance_band = self._get_band(self.source_product, "S5_radiance_an")
-        self.bt37_band = self._get_band(self.source_product, "S7_BT_in")
-        self.bt11_band = self._get_band(self.source_product, "S8_BT_in")
-        self.bt12_band = self._get_band(self.source_product, "S9_BT_in")
         self.sza_tpg = self._get_band(self.source_product, "solar_zenith_tn")
+
+        # we need to resample the required BT bands onto the grid of the radiance bands:
+        # 1. band subset for BT bands:
+        subset_parameters = HashMap()
+        subset_parameters.put('bandNames', 'S7_BT_in,S8_BT_in,S9_BT_in')
+        bt_subset_product = GPF.createProduct('Subset', subset_parameters, self.source_product)
+
+        # 2. resample subset product with BT bands:
+        resample_parameters = HashMap()
+        resample_parameters.put('targetWidth', self.width * 2)
+        resample_parameters.put('targetHeight', self.height * 2)
+        bt_subset_product_resampled = GPF.createProduct('Resample', resample_parameters, bt_subset_product)
+        self.bt37_band = bt_subset_product_resampled.getBand('S7_BT_in')
+        self.bt11_band = bt_subset_product_resampled.getBand('S8_BT_in')
+        self.bt12_band = bt_subset_product_resampled.getBand('S9_BT_in')
 
         ##############################
 
