@@ -137,7 +137,7 @@ class Sice2ScdaTifdirsOp:
         bt11_data = np.array(bt11_tile.getSamplesFloat(), dtype=np.float32).reshape((rh, rw))
         bt12_data = np.array(bt12_tile.getSamplesFloat(), dtype=np.float32).reshape((rh, rw))
 
-        scda_data, ndsi_data = scda.scda_v20(r550_data, r1600_data, bt37_data, bt11_data, bt12_data)
+        scda_data, ndsi_data = scda.scda_v20(r550_data, r1600_data, bt37_data, bt11_data, bt12_data, True)
 
         # The target tiles which shall be filled with data are provided as parameter to this method
         # Set the results to the target tiles

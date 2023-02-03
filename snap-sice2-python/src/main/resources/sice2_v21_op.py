@@ -20,16 +20,21 @@ from esa_snappy import FlagCoding
 from esa_snappy import jpy
 
 # and then import the type
-import sice2_constants
-import sice2_v21_algo
-import sice2_v21_io
-import sice2_v21_utils
-
 Float = jpy.get_type('java.lang.Float')
 Color = jpy.get_type('java.awt.Color')
 
 BitSetter = jpy.get_type('org.esa.snap.core.util.BitSetter')
 BandMathsType = jpy.get_type('org.esa.snap.core.datamodel.Mask$BandMathsType')
+HashMap = jpy.get_type('java.util.HashMap')
+
+from esa_snappy import Product
+from esa_snappy import ProductUtils
+from esa_snappy import GPF
+
+import sice2_constants
+import sice2_v21_algo
+import sice2_v21_io
+import sice2_v21_utils
 
 
 class Sice2V21Op:
@@ -67,16 +72,44 @@ class Sice2V21Op:
         # Via the context object the source product which shall be processed can be retrieved
         self.source_product = context.getSourceProduct('l1bProduct')
         self.cloud_product = context.getSourceProduct('cloudProduct')
+
+        self.width = self.source_product.getSceneRasterWidth()
+        self.height = self.source_product.getSceneRasterHeight()
+
         print('initialize: source product location is', self.source_product.getFileLocation())
+
+        self.cloud_mask_band = None
+        scda_cloud_product_on_olci_raster = None
         if self.cloud_product is not None:
             print('initialize: cloud product location is', self.cloud_product.getFileLocation())
+
+            # if SCDA cloud product:
+            if self.cloud_product.containsBand('scda_cloud_mask'):
+                olci_rad_subset_product = Product('Rad subset', 'Rad subset', self.width, self.height)
+                ProductUtils.copyGeoCoding(self.source_product, olci_rad_subset_product)
+                ProductUtils.copyBand('Oa10_radiance', self.source_product, olci_rad_subset_product, True)
+
+                # collocate the two subsets, OLCI as master:
+                input_products = HashMap()
+                input_products.put('master', olci_rad_subset_product)
+                input_products.put('slave', self.cloud_product)
+                parameters = HashMap()
+                parameters.put('masterComponentPattern', '${ORIGINAL_NAME}')
+                parameters.put('slaveComponentPattern', '${ORIGINAL_NAME}')
+                operator_name = 'Collocate'
+                scda_cloud_product_on_olci_raster = GPF.createProduct(operator_name, parameters, input_products)
+                self.cloud_mask_band = self._get_band(scda_cloud_product_on_olci_raster, "scda_cloud_mask")
+            elif self.cloud_product.containsBand('pixel_classif_flags'):
+                # Idepix
+                pass
+            else:
+                raise Exception('Selected cloud product is not valid.')
 
         self.write_spectral_albedos = context.getParameter('writeSpectralAlbedos')
 
         self.called_compute_tile_stack = 0
 
-        self.width = self.source_product.getSceneRasterWidth()
-        self.height = self.source_product.getSceneRasterHeight()
+
 
         #####
         self.input_products_all_band_names = []
@@ -122,6 +155,12 @@ class Sice2V21Op:
         snow_product.setStartTime(self.source_product.getStartTime())
         snow_product.setEndTime(self.source_product.getEndTime())
         snow_product.setAutoGrouping("albedo_spectral_spherical:albedo_spectral_planar:rBRR")
+
+        # self._get_band(scda_cloud_product_on_olci_raster, "scda_cloud_mask")
+        if scda_cloud_product_on_olci_raster is not None:
+            ProductUtils.copyBand('Oa10_radiance', scda_cloud_product_on_olci_raster, snow_product, True)
+            ProductUtils.copyBand('scda_cloud_mask', scda_cloud_product_on_olci_raster, snow_product, True)
+            sice2_v21_io.create_scda_bitmask(snow_product)
 
         context.setTargetProduct(snow_product)
 
@@ -238,6 +277,9 @@ class Sice2V21Op:
                 self.r_brr_bands.append(r_brr_band)
 
     def computeTileStack(self, context, target_tiles, target_rectangle):
+        pass
+
+    def computeTileStack_real(self, context, target_tiles, target_rectangle):
 
         num_pixels = target_rectangle.width * target_rectangle.height
         print('Call computeTileStack: num_pixels=' + str(num_pixels))

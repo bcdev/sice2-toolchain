@@ -119,4 +119,25 @@ def create_snow_retrieval_bitmask(snow_product):
                                 "isnow.SPH_ALB_NO_SOLUTION", Color.MAGENTA, 0.5)
     snow_product.getMaskGroup().add(index, mask)
 
+def create_scda_flag_coding(flag_id):
+    scda_flag_coding = FlagCoding(flag_id)
+    scda_flag_coding.addFlag("SCDA_INVALID", BitSetter.setFlag(0, 0), "Invalid")
+    scda_flag_coding.addFlag("SCDA_CLEAR", BitSetter.setFlag(0, 1), "Clear")
+    scda_flag_coding.addFlag("SCDA_CLOUDY", BitSetter.setFlag(0, 2), "Cloudy")
+    return scda_flag_coding
 
+def create_scda_bitmask(scda_product):
+    index = 0
+    w = scda_product.getSceneRasterWidth()
+    h = scda_product.getSceneRasterHeight()
+
+    mask = BandMathsType.create("SCDA_INVALID", "Invalid", w, h,"scda_cloud_mask.SCDA_INVALID", Color.red, 0.5)
+    scda_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("SCDA_CLEAR", "Clear", w, h,"scda_cloud_mask.SCDA_CLEAR", Color.white, 0.5)
+    scda_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("SCDA_CLOUDY", "Cloudy", w, h,"scda_cloud_mask.SCDA_CLOUDY", Color.yellow, 0.5)
+    scda_product.getMaskGroup().add(index, mask)

@@ -13,6 +13,7 @@ bandcoord = ("band", np.arange(21))
 
 SNOW_TYPE_FLAG = 'SNOW_TYPE_FLAG'
 POL_TYPE_FLAG = 'POL_TYPE'
+SCDA_FLAG = 'SCDA_FLAG'
 
 # OLCI channels
 wls = xr.DataArray(
@@ -780,3 +781,16 @@ DEFAULT_IDEPIX_VALID_PIXEL_EXPR = 'not pixel_classif_flags.IDEPIX_INVALID ' \
                                   'and not pixel_classif_flags.IDEPIX_CLOUD_BUFFER ' \
                                   'and not pixel_classif_flags.IDEPIX_CLOUD_SHADOW ' \
                                   'and not pixel_classif_flags.IDEPIX_MOUNTAIN_SHADOW '
+
+SCDA_PROCESSOR_ID = 'SCDA'
+
+SCDA_FLAG_BAND_NAME = 'scda_cloud_mask'
+
+IDEPIX_SCDA_FLAG_CODING_DICT = {
+    'scda_cloud_mask.SCDA_INVALID': 1,
+    'scda_cloud_mask.SCDA_CLEAR': 2,
+    'scda_cloud_mask.SCDA_CLOUDY': 4,
+}
+
+DEFAULT_SCDA_VALID_PIXEL_EXPR = 'not scda_cloud_mask.SCDA_INVALID ' \
+                                'and not scda_cloud_mask.SCDA_CLOUDY '

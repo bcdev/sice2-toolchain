@@ -13,12 +13,19 @@ import numpy as np
 # First import jpy
 from esa_snappy import jpy
 
-HashMap = jpy.get_type('java.util.HashMap')
-
-from esa_snappy import ProductIO
+from esa_snappy import Product
+from esa_snappy import ProductUtils
 from esa_snappy import GPF
+from esa_snappy import FlagCoding
 
+HashMap = jpy.get_type('java.util.HashMap')
+BitSetter = jpy.get_type('org.esa.snap.core.util.BitSetter')
+BandMathsType = jpy.get_type('org.esa.snap.core.datamodel.Mask$BandMathsType')
 Float = jpy.get_type('java.lang.Float')
+Color = jpy.get_type('java.awt.Color')
+
+import sice2_constants
+import sice2_v21_io
 
 import scda
 
@@ -73,9 +80,11 @@ class Sice2ScdaOp:
 
         # we need to resample the required BT bands onto the grid of the radiance bands:
         # 1. band subset for BT bands:
-        subset_parameters = HashMap()
-        subset_parameters.put('bandNames', 'S7_BT_in,S8_BT_in,S9_BT_in')
-        bt_subset_product = GPF.createProduct('Subset', subset_parameters, self.source_product)
+        bt_subset_product = Product('BT subset', 'BT subset', self.width, self.height)
+        ProductUtils.copyGeoCoding(self.source_product, bt_subset_product)
+        ProductUtils.copyBand('S7_BT_in', self.source_product, bt_subset_product, True)
+        ProductUtils.copyBand('S8_BT_in', self.source_product, bt_subset_product, True)
+        ProductUtils.copyBand('S9_BT_in', self.source_product, bt_subset_product, True)
 
         # 2. resample subset product with BT bands:
         resample_parameters = HashMap()
@@ -89,9 +98,9 @@ class Sice2ScdaOp:
         ##############################
 
         # Create the target product
-        scda_product = esa_snappy.Product('py_SICE21_scda', 'py_SICE21_scda', self.width, self.height)
-        esa_snappy.ProductUtils.copyGeoCoding(self.source_product, scda_product)
-        esa_snappy.ProductUtils.copyMetadata(self.source_product, scda_product)
+        scda_product = Product('py_SICE21_scda', 'py_SICE21_scda', self.width, self.height)
+        ProductUtils.copyGeoCoding(self.source_product, scda_product)
+        ProductUtils.copyMetadata(self.source_product, scda_product)
         scda_product.setStartTime(self.source_product.getStartTime())
         scda_product.setEndTime(self.source_product.getEndTime())
 
@@ -114,10 +123,18 @@ class Sice2ScdaOp:
         :param scda_product:
         :return:
         """
+        # self.scda_band = scda_product.addBand('scda_cloud_mask', esa_snappy.ProductData.TYPE_UINT8)
+        # self.scda_band.setDescription('SCDA binary cloud mask')
+        # self.scda_band.setNoDataValue(255)
+        # self.scda_band.setNoDataValueUsed(True)
+
+        # SCDA as a flag band!
         self.scda_band = scda_product.addBand('scda_cloud_mask', esa_snappy.ProductData.TYPE_UINT8)
         self.scda_band.setDescription('SCDA binary cloud mask')
-        self.scda_band.setNoDataValue(255)
-        self.scda_band.setNoDataValueUsed(True)
+        scda_flag_coding = sice2_v21_io.create_scda_flag_coding(sice2_constants.SCDA_FLAG)
+        self.scda_band.setSampleCoding(scda_flag_coding)
+        scda_product.getFlagCodingGroup().add(scda_flag_coding)
+        sice2_v21_io.create_scda_bitmask(scda_product)
 
         self.ndsi_band = scda_product.addBand('ndsi', esa_snappy.ProductData.TYPE_FLOAT32)
         self.ndsi_band.setDescription('NDSI: (r550 - r1600) / (r550 + r1600)')
@@ -145,7 +162,7 @@ class Sice2ScdaOp:
         r550_refl_data = (r550_rad_data * np.pi) / (SLSTR_S1_SOLAR_FLUX * np.cos(np.deg2rad(sza_data)))
         r1600_refl_data = (r1600_rad_data * np.pi) / (SLSTR_S5_SOLAR_FLUX * np.cos(np.deg2rad(sza_data)))
 
-        scda_data, ndsi_data = scda.scda_v20(r550_refl_data, r1600_refl_data, bt37_data, bt11_data, bt12_data)
+        scda_data, ndsi_data = scda.scda_v20(r550_refl_data, r1600_refl_data, bt37_data, bt11_data, bt12_data, False)
 
         # The target tiles which shall be filled with data are provided as parameter to this method
         # Set the results to the target tiles
@@ -174,3 +191,4 @@ class Sice2ScdaOp:
             if not band:
                 raise RuntimeError('Product has no band or tpg with name', band_name)
         return band
+

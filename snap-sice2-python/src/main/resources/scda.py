@@ -41,7 +41,7 @@ def radiometric_calibration(r16_data):
     return r16_data * factor
 
 
-def scda_v20(r550, r16, bt37, bt11, bt12):
+def scda_v20(r550, r16, bt37, bt11, bt12, is_sice_toolchain):
     """
 
     INPUTS: numpy arrays for:
@@ -103,8 +103,13 @@ def scda_v20(r550, r16, bt37, bt11, bt12):
 
     cloud_detection[cloud_detection == False] = t6[cloud_detection == False]
 
-    # set cloudy to 1, clear to 0, and invalid to 255:
-    cloud_detection = np.where(cloud_detection == True, 1.0, 0.0)
-    cloud_detection[mask_invalid] = 255.0
+    if is_sice_toolchain:
+        # set cloudy to 1, clear to 0, and invalid to 255:
+        cloud_detection = np.where(cloud_detection == True, 1.0, 0.0)
+        cloud_detection[mask_invalid] = 255.0
+    else:
+        # SNAP mode
+        cloud_detection = np.where(cloud_detection == True, 4.0, 2.0)
+        cloud_detection[mask_invalid] = 1.0
 
     return cloud_detection, ndsi
