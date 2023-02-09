@@ -129,6 +129,23 @@ class TestSice2(unittest.TestCase):
         ################
         # Idepix:
         flagname = 'pixel_classif_flags'
+        # Default:
+        valid_pixel_expr = sice2_constants.DEFAULT_IDEPIX_VALID_PIXEL_EXPR
+        condition = sice2_v21_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
+                                                                        sice2_constants.
+                                                                        IDEPIX_BITMASK_FLAG_CODING_DICT)
+
+        idepix_arr = np.array([[128, 2, 512], [64, 1162, 1232], [1216, 1248, 1264]])
+
+        variables_in_expr_dict = {'pixel_classif_flags': idepix_arr}
+
+        filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
+        # 'True' means valid!!
+        expected_arr = np.array([[True, False, True], [True, False, False], [True, False, False]])
+        self.assertSequenceEqual(filter_array.tolist(), expected_arr.tolist())
+
+        flagname = 'pixel_classif_flags'
+        # Something weird:
         valid_pixel_expr = '(not pixel_classif_flags.IDEPIX_LAND and Oa10_reflectance < 0.13)   or (not pixel_classif_flags.IDEPIX_LAND and    pixel_classif_flags.IDEPIX_CLOUD)'
         condition = sice2_v21_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
                                                                         sice2_constants.
@@ -141,6 +158,22 @@ class TestSice2(unittest.TestCase):
 
         filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
         expected_arr = np.array([[True, True, True], [True, False, True], [True, True, True]])
+        self.assertSequenceEqual(filter_array.tolist(), expected_arr.tolist())
+
+        ################
+        # SCDA:
+        flagname = 'scda_cloud_mask'
+        # Default:
+        valid_pixel_expr = sice2_constants.DEFAULT_SCDA_VALID_PIXEL_EXPR
+        condition = sice2_v21_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
+                                                                        sice2_constants.
+                                                                        SCDA_BITMASK_FLAG_CODING_DICT)
+        scda_arr = np.array([[1, 2, 4], [4, 4, 2], [1, 1, 2]])
+        variables_in_expr_dict = {'scda_cloud_mask': scda_arr}
+
+        filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
+        # 'True' means valid!!
+        expected_arr = np.array([[False, True, False], [False, False, True], [False, False, True]])
         self.assertSequenceEqual(filter_array.tolist(), expected_arr.tolist())
 
     def test_compare_bool_arrays(self):

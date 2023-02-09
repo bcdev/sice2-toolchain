@@ -135,9 +135,49 @@ def create_scda_bitmask(scda_product):
     scda_product.getMaskGroup().add(index, mask)
     index = index + 1
 
-    mask = BandMathsType.create("SCDA_CLEAR", "Clear", w, h,"scda_cloud_mask.SCDA_CLEAR", Color.white, 0.5)
+    mask = BandMathsType.create("SCDA_CLEAR", "Clear", w, h,"scda_cloud_mask.SCDA_CLEAR", Color.CYAN, 0.5)
     scda_product.getMaskGroup().add(index, mask)
     index = index + 1
 
     mask = BandMathsType.create("SCDA_CLOUDY", "Cloudy", w, h,"scda_cloud_mask.SCDA_CLOUDY", Color.yellow, 0.5)
     scda_product.getMaskGroup().add(index, mask)
+
+def create_idepix_bitmask(snow_product):
+    index = 0
+    w = snow_product.getSceneRasterWidth()
+    h = snow_product.getSceneRasterHeight()
+
+    mask = BandMathsType.create("IDEPIX_INVALID", "Invalid pixels", w, h,
+                                "pixel_classif_flags.IDEPIX_INVALID", Color.MAGENTA, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("IDEPIX_CLOUD", "Pixels which are either cloud_sure or cloud_ambiguous", w, h,
+                                "pixel_classif_flags.IDEPIX_CLOUD", Color.RED, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("IDEPIX_CLOUD_BUFFER",
+                                "A buffer of n pixels around a cloud. n is a user supplied parameter. Applied to pixels masked as 'cloud'", w, h,
+                                "pixel_classif_flags.IDEPIX_CLOUD_BUFFER", Color.YELLOW, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("IDEPIX_CLOUD_SHADOW", "Pixel is affected by a cloud shadow", w, h,
+                                "pixel_classif_flags.IDEPIX_CLOUD_SHADOW", Color.ORANGE, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("IDEPIX_SNOW_ICE", "Clear snow/ice pixels", w, h,
+                                "pixel_classif_flags.IDEPIX_SNOW_ICE", Color.CYAN, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("IDEPIX_COASTLINE", "Pixels at a coastline", w, h,
+                                "pixel_classif_flags.IDEPIX_COASTLINE", Color.PINK, 0.5)
+    snow_product.getMaskGroup().add(index, mask)
+    index = index + 1
+
+    mask = BandMathsType.create("IDEPIX_LAND", "Land pixels", w, h,
+                                "pixel_classif_flags.IDEPIX_LAND", Color.GREEN, 0.5)
+    snow_product.getMaskGroup().add(index, mask)

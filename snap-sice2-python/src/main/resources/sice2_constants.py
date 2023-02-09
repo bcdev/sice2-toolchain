@@ -786,7 +786,7 @@ SCDA_PROCESSOR_ID = 'SCDA'
 
 SCDA_FLAG_BAND_NAME = 'scda_cloud_mask'
 
-IDEPIX_SCDA_FLAG_CODING_DICT = {
+SCDA_BITMASK_FLAG_CODING_DICT = {
     'scda_cloud_mask.SCDA_INVALID': 1,
     'scda_cloud_mask.SCDA_CLEAR': 2,
     'scda_cloud_mask.SCDA_CLOUDY': 4,
