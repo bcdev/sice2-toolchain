@@ -4,7 +4,7 @@
         "http://java.sun.com/products/javahelp/helpset_2_0.dtd">
 
 <helpset version="2.0">
-    <title>SICE2 Processor Help</title>
+    <title>SICE2 Processors Help</title>
     <maps>
         <homeID>top</homeID>
         <mapref location="map.jhm"/>

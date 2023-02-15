@@ -10,9 +10,9 @@
                       methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
                 <attr name="operatorName" stringvalue="py_sice2_v21_op"/>
-                <attr name="displayName" stringvalue="SICE2 v2.1 (Python)"/>
-                <attr name="dialogTitle" stringvalue="SICE2 v2.1 (Python)"/>
-                <attr name="helpId" stringvalue="pySice2Doc"/>  <!--The helpId if help contents is provided-->
+                <attr name="displayName" stringvalue="SICE2 v2.1 (OLCI L1b)"/>
+                <attr name="dialogTitle" stringvalue="SICE2 v2.1 (OLCI L1b)"/>
+                <attr name="helpId" stringvalue="sice2Tool"/>  <!--The helpId if help contents is provided-->
                 <attr name="targetProductNameSuffix" stringvalue="_sice2_v21_py"/>
                 <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 v2.1 Snow Retrieval."/>
             </file>
@@ -24,9 +24,9 @@
                       methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
                 <attr name="operatorName" stringvalue="py_sice2_v21_tifdirs_op"/>
-                <attr name="displayName" stringvalue="SICE2 from TIFs v2.1 (Python)"/>
-                <attr name="dialogTitle" stringvalue="SICE2 from TIFs v2.1 (Python)"/>
-                <attr name="helpId" stringvalue="pySice2Doc"/>  <!--The helpId if help contents is provided-->
+                <attr name="displayName" stringvalue="SICE2 v2.1 (OLCI single TIFs, toolchain mode)"/>
+                <attr name="dialogTitle" stringvalue="SICE2 v2.1 (OLCI single TIFs, toolchain mode)"/>
+                <attr name="helpId" stringvalue="sice2Tool"/>  <!--The helpId if help contents is provided-->
                 <attr name="targetProductNameSuffix" stringvalue="_sice2_v21_tifdirs_py"/>
                 <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 v2.1 Snow Retrieval. Special version reading from TIF directories."/>
             </file>
@@ -38,9 +38,9 @@
                       methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
                 <attr name="operatorName" stringvalue="py_sice2_scda_op"/>
-                <attr name="displayName" stringvalue="SICE2 SCDA (Python)"/>
-                <attr name="dialogTitle" stringvalue="SICE2 SCDA (Python)"/>
-                <attr name="helpId" stringvalue="pySice2Doc"/>  <!--The helpId if help contents is provided-->
+                <attr name="displayName" stringvalue="SCDA from SLSTR L1b"/>
+                <attr name="dialogTitle" stringvalue="SCDA from SLSTR L1b"/>
+                <attr name="helpId" stringvalue="sice2Tool"/>  <!--The helpId if help contents is provided-->
                 <attr name="targetProductNameSuffix" stringvalue="_sice2_scda"/>
                 <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 SCDA cloud masking."/>
             </file>
@@ -52,9 +52,9 @@
                       methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
                 <attr name="operatorName" stringvalue="py_sice2_scda_tifdirs_op"/>
-                <attr name="displayName" stringvalue="SICE2 SCDA from TIFs (Python)"/>
-                <attr name="dialogTitle" stringvalue="SICE2 SCDA from TIFs (Python)"/>
-                <attr name="helpId" stringvalue="pySice2Doc"/>  <!--The helpId if help contents is provided-->
+                <attr name="displayName" stringvalue="SCDA from SLSTR single TIFs (SICE2 toolchain mode)"/>
+                <attr name="dialogTitle" stringvalue="SCDA from SLSTR single TIFs (SICE2 toolchain mode)"/>
+                <attr name="helpId" stringvalue="sice2Tool"/>  <!--The helpId if help contents is provided-->
                 <attr name="targetProductNameSuffix" stringvalue="_sice2_scda"/>
                 <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 SCDA cloud masking. Special version reading from TIF directories."/>
             </file>
@@ -64,31 +64,36 @@
 
     <folder name="Menu">
         <folder name="Optical">
+            <folder name="Preprocessing">
+                <folder name="SLSTR SCDA Cloud Processor">
+                    <file name="Sice2ScdaOpAction.shadow">
+                        <attr name="originalFile"
+                              stringvalue="Actions/Operators/Sice2ScdaOpAction.instance"/>
+                        <attr name="position" intvalue="13000"/>
+                    </file>
+
+                    <file name="Sice2ScdaTifdirsOpAction.shadow">
+                        <attr name="originalFile"
+                              stringvalue="Actions/Operators/Sice2ScdaTifdirsOpAction.instance"/>
+                        <attr name="position" intvalue="14000"/>
+                    </file>
+                </folder>
+            </folder>
+
             <folder name="Thematic Land Processing">
+                <folder name="Snow Properties Processor">
+                    <file name="Sice2V21OpAction.shadow">
+                        <attr name="originalFile"
+                              stringvalue="Actions/Operators/Sice2V21OpAction.instance"/>
+                        <attr name="position" intvalue="13000"/>
+                    </file>
 
-                <file name="Sice2V21OpAction.shadow">
-                    <attr name="originalFile"
-                          stringvalue="Actions/Operators/Sice2V21OpAction.instance"/>
-                    <attr name="position" intvalue="13000"/>
-                </file>
-
-                <file name="Sice2V21TifdirsOpAction.shadow">
-                    <attr name="originalFile"
-                          stringvalue="Actions/Operators/Sice2V21TifdirsOpAction.instance"/>
-                    <attr name="position" intvalue="14000"/>
-                </file>
-
-                <file name="Sice2ScdaOpAction.shadow">
-                    <attr name="originalFile"
-                          stringvalue="Actions/Operators/Sice2ScdaOpAction.instance"/>
-                    <attr name="position" intvalue="13000"/>
-                </file>
-
-                <file name="Sice2ScdaTifdirsOpAction.shadow">
-                    <attr name="originalFile"
-                          stringvalue="Actions/Operators/Sice2ScdaTifdirsOpAction.instance"/>
-                    <attr name="position" intvalue="14000"/>
-                </file>
+                    <file name="Sice2V21TifdirsOpAction.shadow">
+                        <attr name="originalFile"
+                              stringvalue="Actions/Operators/Sice2V21TifdirsOpAction.instance"/>
+                        <attr name="position" intvalue="14000"/>
+                    </file>
+                </folder>
             </folder>
         </folder>
     </folder>
