@@ -9,10 +9,18 @@
 
     <tocitem text="Sentinel Toolbox Application">
         <tocitem text="Optical">
+            <tocitem text="Preprocessing">
+                <tocitem text="Masking">
+                    <tocitem text="SICE2 SLSTR Cloud Detection" target="sice2ScdaTool">
+                        <tocitem text="SCDA Algorithm Specification" target="sice2ScdaAlgorithmSpecification"/>
+                        <tocitem text="SCDA Processor Description" target="sice2ScdaProcessorDescription"/>
+                    </tocitem>
+                </tocitem>
+            </tocitem>
             <tocitem text="Thematic Land Processing">
-                <tocitem text="SICE2 Processor" target="sice2Tool">
-                    <tocitem text="Algorithm Specification" target="sice2AlgorithmSpecification"/>
-                    <tocitem text="Processor Description" target="sice2ProcessorDescription"/>
+                <tocitem text="SICE2 Snow Retrieval Processors" target="sice2SnowRetrievalTool">
+                    <tocitem text="Algorithm Specification" target="sice2SnowRetrievalAlgorithmSpecification"/>
+                    <tocitem text="Processor Description" target="sice2SnowRetrievalProcessorDescription"/>
                 </tocitem>
             </tocitem>
         </tocitem>

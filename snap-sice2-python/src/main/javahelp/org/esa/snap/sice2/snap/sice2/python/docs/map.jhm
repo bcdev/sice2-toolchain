@@ -5,8 +5,12 @@
 
 <map version="2.0">
 
-    <mapID target="sice2Tool" url="sice2/Sice2Tool.html"/>
-    <mapID target="sice2AlgorithmSpecification" url="sice2/Sice2AlgorithmSpecification.html"/>
-    <mapID target="sice2ProcessorDescription" url="sice2/Sice2ProcessorDescription.html"/>
+    <mapID target="sice2SnowRetrievalTool" url="sice2/Sice2SnowRetrievalTool.html"/>
+    <mapID target="sice2SnowRetrievalAlgorithmSpecification" url="sice2/Sice2SnowRetrievalAlgorithmSpecification.html"/>
+    <mapID target="sice2SnowRetrievalProcessorDescription" url="sice2/Sice2SnowRetrievalProcessorDescription.html"/>
+
+    <mapID target="sice2ScdaTool" url="sice2/Sice2ScdaTool.html"/>
+    <mapID target="sice2ScdaAlgorithmSpecification" url="sice2/Sice2ScdaAlgorithmSpecification.html"/>
+    <mapID target="sice2ScdaProcessorDescription" url="sice2/Sice2ScdaProcessorDescription.html"/>
 
 </map>

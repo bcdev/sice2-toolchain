@@ -10,6 +10,9 @@ import numpy as np
 
 import xarray as xr
 
+# Append esa_snappy installation dir to path:
+sys.path.append(os.path.expanduser('~') + os.sep + '.snap' + os.sep + 'snap-python')
+
 import esa_snappy
 from esa_snappy import ProductData
 from esa_snappy import ProductIO
@@ -79,7 +82,6 @@ class Sice2V21Op:
         print('initialize: source product location is', self.source_product.getFileLocation())
 
         self.cloud_mask_band = None
-        self.scda_cloud_product_on_olci_raster = None
         if self.cloud_product is not None:
             print('initialize: cloud product location is', self.cloud_product.getFileLocation())
 
@@ -97,8 +99,9 @@ class Sice2V21Op:
                 parameters.put('masterComponentPattern', '${ORIGINAL_NAME}')
                 parameters.put('slaveComponentPattern', '${ORIGINAL_NAME}')
                 operator_name = 'Collocate'
-                self.scda_cloud_product_on_olci_raster = GPF.createProduct(operator_name, parameters, input_products)
-                self.cloud_mask_band = self._get_band(self.scda_cloud_product_on_olci_raster, "scda_cloud_mask")
+                scda_cloud_product_on_olci_raster = GPF.createProduct(operator_name, parameters, input_products)
+                self.cloud_mask_band = self._get_band(scda_cloud_product_on_olci_raster, "scda_cloud_mask")
+                self.cloud_product = scda_cloud_product_on_olci_raster
             elif self.cloud_product.containsBand(sice2_constants.IDEPIX_FLAG_BAND_NAME):
                 # Idepix
                 self.cloud_mask_band = self._get_band(self.cloud_product, sice2_constants.IDEPIX_FLAG_BAND_NAME)
@@ -156,8 +159,8 @@ class Sice2V21Op:
         snow_product.setAutoGrouping("albedo_spectral_spherical:albedo_spectral_planar:rBRR")
 
         if self.cloud_product is not None:
-            if self.cloud_product.containsBand(sice2_constants.SCDA_FLAG_BAND_NAME) and self.scda_cloud_product_on_olci_raster is not None:
-                ProductUtils.copyBand(sice2_constants.SCDA_FLAG_BAND_NAME, self.scda_cloud_product_on_olci_raster, snow_product, True)
+            if self.cloud_product.containsBand(sice2_constants.SCDA_FLAG_BAND_NAME):
+                ProductUtils.copyBand(sice2_constants.SCDA_FLAG_BAND_NAME, self.cloud_product, snow_product, True)
                 sice2_v21_io.create_scda_bitmask(snow_product)
             elif self.cloud_product.containsBand(sice2_constants.IDEPIX_FLAG_BAND_NAME):
                 ProductUtils.copyBand(sice2_constants.IDEPIX_FLAG_BAND_NAME, self.cloud_product, snow_product, True)
@@ -175,9 +178,6 @@ class Sice2V21Op:
 
         end_time = time.process_time()
         print('SNAPPY SICE2 processing time (CPU seconds): ' + str((end_time - start_time)))
-
-        # TEST:
-        # context.setTargetProduct(self.scda_cloud_product_on_olci_raster)
 
         f.close()
 
@@ -354,31 +354,6 @@ class Sice2V21Op:
 
         # Extract output from 'snow' xarray.Dataset:
         grain_diameter_data = snow['diameter'].values
-        # TEST:
-        grain_diameter_data[:] = 33.0
-        grain_diameter_data[np.where(~valid_expression_filter_array)] = 22.0
-
-        print('Idepix no cloud, ok, 200/50: ' + str(valid_expression_filter_array[200 + 50*673]))  # no cloud, ok
-        print('Idepix cloud, ok, 200/125: ' + str(valid_expression_filter_array[200 + 125*673])) # cloud, ok
-        print('SCDA cloud ok, 495/145: ' + str(valid_expression_filter_array[495 + 145*673]))  # cloud ok
-        print('SCDA no cloud ok, 495/190: ' + str(valid_expression_filter_array[495 + 190*673]))  # no cloud, ok
-        print('SCDA cloud, not ok, 495/203: ' + str(valid_expression_filter_array[495 + 203*673]))  # cloud, not ok
-        print('SCDA cloud, not ok, 496/203: ' + str(valid_expression_filter_array[496 + 203*673]))  # cloud, not ok
-        print('SCDA cloud, not ok, 497/203: ' + str(valid_expression_filter_array[497 + 203*673]))  # cloud, not ok
-        print('SCDA cloud, not ok, 498/203: ' + str(valid_expression_filter_array[498 + 203*673]))  # cloud, not ok
-        print('SCDA cloud, not ok, 499/203: ' + str(valid_expression_filter_array[499 + 203*673]))  # cloud, not ok
-        if self.cloud_product.containsBand(sice2_constants.SCDA_FLAG_BAND_NAME):
-            scda_cloud_tile = context.getSourceTile(self.cloud_mask_band, target_rectangle)
-            scda_cloud_data = np.array(scda_cloud_tile.getSamplesInt(), dtype=np.uint8)
-            print('SCDA cloud data, 495/145: ' + str(scda_cloud_data[495 + 145*673]))  # cloud ok
-            print('SCDA cloud data, 495/190: ' + str(scda_cloud_data[495 + 190*673]))  # no cloud, ok
-            print('SCDA cloud data, 495/203: ' + str(scda_cloud_data[495 + 203*673]))  # cloud, not ok
-            print('SCDA cloud data, 496/203: ' + str(scda_cloud_data[496 + 203*673]))  # cloud, not ok
-            print('SCDA cloud data, 497/203: ' + str(scda_cloud_data[497 + 203*673]))  # cloud, not ok
-            print('SCDA cloud data, 498/203: ' + str(scda_cloud_data[498 + 203*673]))  # cloud, not ok
-            print('SCDA cloud data, 499/203: ' + str(scda_cloud_data[499 + 203*673]))  # cloud, not ok
-
-        # END TEST
         snow_specific_area_data = snow['area'].values
         albedo_bb_planar_sw_data = snow['rp3'].values
         albedo_bb_spherical_sw_data = snow['rs3'].values
@@ -476,7 +451,7 @@ class Sice2V21Op:
         :return:
         """
         if self.cloud_product is not None:
-            if self.cloud_product.containsBand(sice2_constants.SCDA_FLAG_BAND_NAME) and self.scda_cloud_product_on_olci_raster is not None:
+            if self.cloud_product.containsBand(sice2_constants.SCDA_FLAG_BAND_NAME):
                 # SCDA
                 flagname = sice2_constants.SCDA_FLAG_BAND_NAME
                 expr = sice2_constants.DEFAULT_SCDA_VALID_PIXEL_EXPR
