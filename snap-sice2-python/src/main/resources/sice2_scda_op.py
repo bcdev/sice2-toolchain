@@ -1,6 +1,4 @@
 import datetime
-from math import ceil
-import datetime
 import os
 import platform
 import sys
@@ -9,14 +7,16 @@ import time
 
 import esa_snappy
 import numpy as np
+from esa_snappy import GPF
+from esa_snappy import Product
+from esa_snappy import ProductUtils
 # If a Java type is needed which is not imported by snappy by default it can be retrieved manually.
 # First import jpy
 from esa_snappy import jpy
 
-from esa_snappy import Product
-from esa_snappy import ProductUtils
-from esa_snappy import GPF
-from esa_snappy import FlagCoding
+import sice2_constants
+import sice2_io
+import sice2_scda_algo
 
 HashMap = jpy.get_type('java.util.HashMap')
 BitSetter = jpy.get_type('org.esa.snap.core.util.BitSetter')
@@ -24,10 +24,6 @@ BandMathsType = jpy.get_type('org.esa.snap.core.datamodel.Mask$BandMathsType')
 Float = jpy.get_type('java.lang.Float')
 Color = jpy.get_type('java.awt.Color')
 
-import sice2_constants
-import sice2_v21_io
-
-import scda
 
 SLSTR_S1_SOLAR_FLUX = 1837.39
 SLSTR_S5_SOLAR_FLUX = 248.33
@@ -35,9 +31,9 @@ SLSTR_S5_SOLAR_FLUX = 248.33
 
 class Sice2ScdaOp:
     """
-    The Sice2 GPF operator
+    SICE2 operator for SCDA cloud masking from SLSTR.
 
-    Authors: O.Danne, 2022
+    @author: Olaf Danne, BC (Brockmann Consult)
     """
 
     def __init__(self):
@@ -47,7 +43,7 @@ class Sice2ScdaOp:
         """
         GPF initialize method
 
-        :param operator
+        :param context
         :return:
         """
         t_start = datetime.datetime.now()
@@ -68,8 +64,8 @@ class Sice2ScdaOp:
         self.source_product = context.getSourceProduct('l1bProduct')
         print('initialize: source product location is', self.source_product.getFileLocation())
 
-        self.width = self.source_product.getSceneRasterWidth()
-        self.height = self.source_product.getSceneRasterHeight()
+        width = self.source_product.getSceneRasterWidth()
+        height = self.source_product.getSceneRasterHeight()
 
         print('Start sice2_scda_op...')
 
@@ -80,7 +76,7 @@ class Sice2ScdaOp:
 
         # we need to resample the required BT bands onto the grid of the radiance bands:
         # 1. band subset for BT bands:
-        bt_subset_product = Product('BT subset', 'BT subset', self.width, self.height)
+        bt_subset_product = Product('BT subset', 'BT subset', width, height)
         ProductUtils.copyGeoCoding(self.source_product, bt_subset_product)
         ProductUtils.copyBand('S7_BT_in', self.source_product, bt_subset_product, True)
         ProductUtils.copyBand('S8_BT_in', self.source_product, bt_subset_product, True)
@@ -88,8 +84,8 @@ class Sice2ScdaOp:
 
         # 2. resample subset product with BT bands:
         resample_parameters = HashMap()
-        resample_parameters.put('targetWidth', self.width * 2)
-        resample_parameters.put('targetHeight', self.height * 2)
+        resample_parameters.put('targetWidth', width * 2)
+        resample_parameters.put('targetHeight', height * 2)
         bt_subset_product_resampled = GPF.createProduct('Resample', resample_parameters, bt_subset_product)
         self.bt37_band = bt_subset_product_resampled.getBand('S7_BT_in')
         self.bt11_band = bt_subset_product_resampled.getBand('S8_BT_in')
@@ -98,7 +94,7 @@ class Sice2ScdaOp:
         ##############################
 
         # Create the target product
-        scda_product = Product('py_SICE21_scda', 'py_SICE21_scda', self.width, self.height)
+        scda_product = Product('py_SICE21_scda', 'py_SICE21_scda', width, height)
         ProductUtils.copyGeoCoding(self.source_product, scda_product)
         ProductUtils.copyMetadata(self.source_product, scda_product)
         scda_product.setStartTime(self.source_product.getStartTime())
@@ -123,18 +119,14 @@ class Sice2ScdaOp:
         :param scda_product:
         :return:
         """
-        # self.scda_band = scda_product.addBand('scda_cloud_mask', esa_snappy.ProductData.TYPE_UINT8)
-        # self.scda_band.setDescription('SCDA binary cloud mask')
-        # self.scda_band.setNoDataValue(255)
-        # self.scda_band.setNoDataValueUsed(True)
 
         # SCDA as a flag band!
         self.scda_band = scda_product.addBand('scda_cloud_mask', esa_snappy.ProductData.TYPE_UINT8)
         self.scda_band.setDescription('SCDA binary cloud mask')
-        scda_flag_coding = sice2_v21_io.create_scda_flag_coding(sice2_constants.SCDA_FLAG)
+        scda_flag_coding = sice2_io.create_scda_flag_coding(sice2_constants.SCDA_FLAG)
         self.scda_band.setSampleCoding(scda_flag_coding)
         scda_product.getFlagCodingGroup().add(scda_flag_coding)
-        sice2_v21_io.create_scda_bitmask(scda_product)
+        sice2_io.create_scda_bitmask(scda_product)
 
         self.ndsi_band = scda_product.addBand('ndsi', esa_snappy.ProductData.TYPE_FLOAT32)
         self.ndsi_band.setDescription('NDSI: (r550 - r1600) / (r550 + r1600)')
@@ -142,7 +134,14 @@ class Sice2ScdaOp:
         self.ndsi_band.setNoDataValueUsed(True)
 
     def computeTileStack(self, context, target_tiles, target_rectangle):
+        """
+        The GPF computeTileStack implementation.
 
+        :param context: operator context
+        :param target_tiles: target tiles
+        :param target_rectangle: target rectangle
+        :return: void
+        """
         r550_rad_tile = context.getSourceTile(self.r550_radiance_band, target_rectangle)
         r1600_rad_tile = context.getSourceTile(self.r1600_radiance_band, target_rectangle)
         bt37_tile = context.getSourceTile(self.bt37_band, target_rectangle)
@@ -162,7 +161,8 @@ class Sice2ScdaOp:
         r550_refl_data = (r550_rad_data * np.pi) / (SLSTR_S1_SOLAR_FLUX * np.cos(np.deg2rad(sza_data)))
         r1600_refl_data = (r1600_rad_data * np.pi) / (SLSTR_S5_SOLAR_FLUX * np.cos(np.deg2rad(sza_data)))
 
-        scda_data, ndsi_data = scda.scda_v20(r550_refl_data, r1600_refl_data, bt37_data, bt11_data, bt12_data, False)
+        scda_data, ndsi_data = sice2_scda_algo.scda_v20(r550_refl_data, r1600_refl_data, bt37_data, bt11_data,
+                                                        bt12_data, False)
 
         # The target tiles which shall be filled with data are provided as parameter to this method
         # Set the results to the target tiles
@@ -172,6 +172,7 @@ class Sice2ScdaOp:
     def dispose(self, operator):
         """
         The GPF dispose method. Nothing to do here.
+
         :param operator:
         :return:
         """
@@ -181,9 +182,10 @@ class Sice2ScdaOp:
     def _get_band(input_product, band_name):
         """
         Gets band from input product by name
+
         :param input_product
         :param band_name
-        :return:
+        :return: band
         """
         band = input_product.getBand(band_name)
         if not band:
@@ -191,4 +193,3 @@ class Sice2ScdaOp:
             if not band:
                 raise RuntimeError('Product has no band or tpg with name', band_name)
         return band
-

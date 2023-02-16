@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-@author: dolaf
+This script contains I/O utility functions needed by the SICE2 SNAP processors.
 
+@author: Olaf Danne, BC (Brockmann Consult)
 """
-
-from math import ceil
 
 from esa_snappy import FlagCoding
 
@@ -19,20 +18,13 @@ BandMathsType = jpy.get_type('org.esa.snap.core.datamodel.Mask$BandMathsType')
 Color = jpy.get_type('java.awt.Color')
 
 
-def check_if_tile_was_processed(width, height, tile_width, tile_height, tile_to_process, tiles_processed):
-    num_tiles_x = ceil(width/tile_width)
-    num_tiles_y = ceil(height/tile_height)
-    tiles_x = []
-    for i in range(num_tiles_x):
-        tiles_x.append((i+1)*tile_width)
-    tiles_y = []
-    for i in range(num_tiles_y):
-        tiles_y.append((i+1)*tile_height)
-
-    return tile_to_process in tiles_processed
-
-
 def create_pol_type_index_coding(flag_id):
+    """
+    Creates index coding for snow pollution type flag.
+
+    :param flag_id: the flag id
+    :return: pol_type_index_coding, image_info
+    """
     pol_type_index_coding = IndexCoding(flag_id)
     points = []
     pol_type_flags = ['SOOT', 'DUST', 'OTHER', 'MIXTURE']
@@ -43,12 +35,18 @@ def create_pol_type_index_coding(flag_id):
         points.append(Point(i, pol_type_colors[i], pol_type_descr[i]))
 
     cpd = ColorPaletteDef(points)
-    imageInfo = ImageInfo(cpd)
+    image_info = ImageInfo(cpd)
 
-    return pol_type_index_coding, imageInfo
+    return pol_type_index_coding, image_info
 
 
 def create_snow_retrieval_flag_coding(flag_id):
+    """
+    Creates flag coding for snow retrieval flag.
+
+    :param flag_id: the flag id
+    :return: snow_retrieval_flag_coding
+    """
     snow_retrieval_flag_coding = FlagCoding(flag_id)
     snow_retrieval_flag_coding.addFlag("CLEAN_SNOW", BitSetter.setFlag(0, 0), "Clean snow")
     snow_retrieval_flag_coding.addFlag("POLLUTED_SNOW", BitSetter.setFlag(0, 1), "Polluted snow")
@@ -71,6 +69,12 @@ def create_snow_retrieval_flag_coding(flag_id):
 
 
 def create_snow_retrieval_bitmask(snow_product):
+    """
+    Creates a bit mask for the snow retrieval flag.
+
+    :param snow_product: the snow retrieval product
+    :return: void
+    """
     index = 0
     w = snow_product.getSceneRasterWidth()
     h = snow_product.getSceneRasterHeight()
@@ -119,30 +123,51 @@ def create_snow_retrieval_bitmask(snow_product):
                                 "isnow.SPH_ALB_NO_SOLUTION", Color.MAGENTA, 0.5)
     snow_product.getMaskGroup().add(index, mask)
 
+
 def create_scda_flag_coding(flag_id):
+    """
+    Creates flag coding for SCDA cloud flag.
+
+    :param flag_id: the flag id
+    :return: scda_flag_coding
+    """
     scda_flag_coding = FlagCoding(flag_id)
     scda_flag_coding.addFlag("SCDA_INVALID", BitSetter.setFlag(0, 0), "Invalid")
     scda_flag_coding.addFlag("SCDA_CLEAR", BitSetter.setFlag(0, 1), "Clear")
     scda_flag_coding.addFlag("SCDA_CLOUDY", BitSetter.setFlag(0, 2), "Cloudy")
     return scda_flag_coding
 
+
 def create_scda_bitmask(scda_product):
+    """
+    Creates a bit mask for the SCDA cloud flag.
+
+    :param scda_product: the SCDA product
+    :return: void
+    """
     index = 0
     w = scda_product.getSceneRasterWidth()
     h = scda_product.getSceneRasterHeight()
 
-    mask = BandMathsType.create("SCDA_INVALID", "Invalid", w, h,"scda_cloud_mask.SCDA_INVALID", Color.red, 0.5)
+    mask = BandMathsType.create("SCDA_INVALID", "Invalid", w, h, "scda_cloud_mask.SCDA_INVALID", Color.red, 0.5)
     scda_product.getMaskGroup().add(index, mask)
     index = index + 1
 
-    mask = BandMathsType.create("SCDA_CLEAR", "Clear", w, h,"scda_cloud_mask.SCDA_CLEAR", Color.CYAN, 0.5)
+    mask = BandMathsType.create("SCDA_CLEAR", "Clear", w, h, "scda_cloud_mask.SCDA_CLEAR", Color.CYAN, 0.5)
     scda_product.getMaskGroup().add(index, mask)
     index = index + 1
 
-    mask = BandMathsType.create("SCDA_CLOUDY", "Cloudy", w, h,"scda_cloud_mask.SCDA_CLOUDY", Color.yellow, 0.5)
+    mask = BandMathsType.create("SCDA_CLOUDY", "Cloudy", w, h, "scda_cloud_mask.SCDA_CLOUDY", Color.yellow, 0.5)
     scda_product.getMaskGroup().add(index, mask)
+
 
 def create_idepix_bitmask(snow_product):
+    """
+    Creates a bit mask for the Idepix classification flag.
+
+    :param snow_product: the snow retrieval product
+    :return: void
+    """
     index = 0
     w = snow_product.getSceneRasterWidth()
     h = snow_product.getSceneRasterHeight()
@@ -158,7 +183,8 @@ def create_idepix_bitmask(snow_product):
     index = index + 1
 
     mask = BandMathsType.create("IDEPIX_CLOUD_BUFFER",
-                                "A buffer of n pixels around a cloud. n is a user supplied parameter. Applied to pixels masked as 'cloud'", w, h,
+                                "A buffer of n pixels around a cloud. n is a user supplied parameter. Applied to "
+                                "pixels masked as 'cloud'", w, h,
                                 "pixel_classif_flags.IDEPIX_CLOUD_BUFFER", Color.YELLOW, 0.5)
     snow_product.getMaskGroup().add(index, mask)
     index = index + 1

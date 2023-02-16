@@ -14,14 +14,14 @@ from esa_snappy import ProductIO
 
 Float = jpy.get_type('java.lang.Float')
 
-import scda
+import sice2_scda_algo
 
 
 class Sice2ScdaTifdirsOp:
     """
-    The Sice2 GPF operator
+    SICE2 operator for SCDA cloud masking from SLSTR. (Uses single TIFs, GEUS toolchain mode.)
 
-    Authors: O.Danne, 2022
+    @author: Olaf Danne, BC (Brockmann Consult)
     """
 
     def __init__(self):
@@ -137,7 +137,7 @@ class Sice2ScdaTifdirsOp:
         bt11_data = np.array(bt11_tile.getSamplesFloat(), dtype=np.float32).reshape((rh, rw))
         bt12_data = np.array(bt12_tile.getSamplesFloat(), dtype=np.float32).reshape((rh, rw))
 
-        scda_data, ndsi_data = scda.scda_v20(r550_data, r1600_data, bt37_data, bt11_data, bt12_data, True)
+        scda_data, ndsi_data = sice2_scda_algo.scda_v20(r550_data, r1600_data, bt37_data, bt11_data, bt12_data, True)
 
         # The target tiles which shall be filled with data are provided as parameter to this method
         # Set the results to the target tiles

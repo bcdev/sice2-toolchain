@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-
-@author: Adrien Wehrlé, GEUS (Geological Survey of Denmark and Greenland)
-
 Implementation of the Simple Cloud Detection Algorithm (SCDA) v2.0
 using SLSTR bands, described in Fig. 5 of METSÄMÄKI et al, 2015.
 
@@ -13,6 +10,7 @@ Remote Sensing of Environment, 2015, vol. 156, p. 96-108.
 The original syntax has been preserved to easily link back to the description
 of the algorithm.
 
+@author: Adrien Wehrlé, GEUS (Geological Survey of Denmark and Greenland)
 @author: Olaf Danne, BC (Brockmann Consult): Technical adaptations for usage from SNAP operators (01/2023).
 
 """

@@ -1,37 +1,33 @@
 import datetime
+import os
+import platform
+import sys
+import tempfile
+import time
 from math import ceil
 
-import sice2_v21_algo
-
-import platform
-import tempfile
-import sys
-import os
-import time
-import numpy as np
-
-import xarray as xr
-
 import esa_snappy
+import numpy as np
+import xarray as xr
 from esa_snappy import ProductIO
-
 # If a Java type is needed which is not imported by snappy by default it can be retrieved manually.
 # First import jpy
 from esa_snappy import jpy
 
 # and then import the type
 import sice2_constants
-import sice2_v21_utils
+import sice2_utils
+import sice2_snow_v21_algo
 
 Float = jpy.get_type('java.lang.Float')
 Color = jpy.get_type('java.awt.Color')
 
 
-class Sice2V21TifdirsOp:
+class Sice2SnowV21TifdirsOp:
     """
-    The Sice2 GPF operator
+    SICE2 operator for the retrieval of snow properties. (Uses OLCI single TIFs, GEUS toolchain mode.)
 
-    Authors: O.Danne, 2022
+    @author: Olaf Danne, BC (Brockmann Consult)
     """
 
     def __init__(self):
@@ -67,7 +63,7 @@ class Sice2V21TifdirsOp:
 
         self.called_compute_tile_stack = 0
 
-        tif_source_product_paths = sice2_v21_utils.get_tif_source_product_paths(tif_input_directory)
+        tif_source_product_paths = sice2_utils.get_tif_source_product_paths(tif_input_directory)
 
         sza_product = ProductIO.readProduct(tif_input_directory + os.sep + "SZA.tif")
         saa_product = ProductIO.readProduct(tif_input_directory + os.sep + "SAA.tif")
@@ -274,7 +270,7 @@ class Sice2V21TifdirsOp:
             chunk_size = num_pixels
 
         print('Call process_by_chunk: chunksize=' + str(num_pixels))
-        snow = sice2_v21_algo.process_by_chunk(olci_scene, chunk_size=chunk_size)
+        snow = sice2_snow_v21_algo.process_by_chunk(olci_scene, chunk_size=chunk_size)
         ###
 
         # Extract output from 'snow' xarray.Dataset:

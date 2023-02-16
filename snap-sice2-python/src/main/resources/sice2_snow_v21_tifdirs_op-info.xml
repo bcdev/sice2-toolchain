@@ -4,16 +4,16 @@
 -->
 <operator>
     <!-- The name uniquely identifies the operator within SNAP -->
-    <name>org.esa.snap.sice2.Sice2V2Op</name>
+    <name>org.esa.snap.sice2.Sice2SnowV21TifdirsOp</name>
     <!-- The alias is a more user-friendly name, e.g. to be used on the command line -->
-    <alias>py_sice2_v2_op</alias>
+    <alias>Sice2.Snow.Olci.Tifs</alias>
     <operatorClass>org.esa.snap.snappy.gpf.PyOperator</operatorClass>
 
-    <version>0.1</version>
+    <version>1.1</version>
     <authors>Brockmann Consult GmbH</authors>
     <copyright>(C) 2022 ESA, Brockmann Consult GmbH</copyright>
 
-    <description>Operator for SICE2</description>
+    <description>SICE2 operator for the retrieval of snow properties. (Uses OLCI single TIFs, GEUS toolchain mode.)</description>
 
     <namedSourceProducts>
         <!-- One or more source products can be specified.
@@ -35,17 +35,6 @@
             <!-- An empty parameter is not allowed -->
             <notEmpty>true</notEmpty>
         </parameter>
-        <parameter>
-            <name>tifOutputDir</name>
-            <description>The directory containing the output tif files.</description>
-            <label>Output tif file directory</label>
-            <dataType>java.lang.String</dataType>
-            <defaultValue>.</defaultValue>
-            <!-- An empty parameter is not allowed -->
-            <notEmpty>true</notEmpty>
-        </parameter>
-
-
     </parameters>
 
 </operator>

@@ -40,8 +40,8 @@ https://github.com/bcdev/sice2-toolchain/blob/master/snap-sice2-python/README.md
 
 #### Run the plugin
 - after successful installation, you should see two operators in SNAP gpt help:
-  - gpt -h py_sice2_v21_op
-  - gpt -h py_sice2_v21_tifdirs_op
+  - gpt -h Sice2.Snow.Olci
+  - gpt -h Sice2.Snow.Olci.Tifs
   - The first operator can be regarded as the 'main' SICE2 SNAP operator. It expects an OLCI L1 product as input.
 Subsets in other formats as SAFE are also accepted. As we know from S3Snow, an IdePix cloud mask product can be optionally be provided 
 if given on the raster as the OLCI L1b. The output is a single product containing all the variables which pySICEv21 writes into single
@@ -54,10 +54,10 @@ done easily with the SNAP subset operator ('band subset').
   - the two operators are also available in SNAP desktop via menu 'Optical --> Thematic Land Processing'
 
 #### Performance
-- py_sice2_v21_op: Processing of a full OLCI L1 FR scene (4865x4091 pixel) with all spectral variables 
+- Sice2.Snow.Olci: Processing of a full OLCI L1 FR scene (4865x4091 pixel) with all spectral variables
 being written: ~75min on a standard Linux VM. Thus, it is recommended to create
 appropriate subsets in advance for the regions of interest.
-- py_sice2_v21_tifdirs_op: Processing of Greenland mosaics for one day: ~7min on a standard Linux VM 
+- Sice2.Snow.Olci.Tifs: Processing of Greenland mosaics for one day: ~7min on a standard Linux VM
 (comparable with performance of pySICEv21 pure Python)
 
 #### Verification

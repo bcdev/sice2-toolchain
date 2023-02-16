@@ -23,10 +23,5 @@ class TestEnv(unittest.TestCase):
         import os
         print('os import ok...')
 
-    def test_sice2_sources_available(self):
-        import sice2_algo
-        self.sice2algo = sice2_algo.Sice2Algo(-0.2, 0.8)
-        print('sice2algo import ok...')
-
 # suite = unittest.TestLoader().loadTestsFromTestCase(TestEnv)
 # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-This script contains the constants needed by the pySICE library.
-@author: bav@geus.dk
+This script contains the constants needed by the SICE2 processors.
+
+@author: Baptiste Vandecrux, GEUS (Geological Survey of Denmark and Greenland)
+@author: Olaf Danne, BC (Brockmann Consult): SNAP integration.
 """
 
 import os
@@ -669,9 +671,9 @@ def analyt_func(z1, z2):
 
     am1 = (z2 ** 3. - z1 ** 3.) / 3.
     am2 = (z2 ** 2. / bet + 2. * z2 / bet ** 2 + 2. / bet ** 3) * np.exp(-bet * z2) \
-          - (z1 ** 2. / bet + 2. * z1 / bet ** 2 + 2. / bet ** 3) * np.exp(-bet * z1)
+        - (z1 ** 2. / bet + 2. * z1 / bet ** 2 + 2. / bet ** 3) * np.exp(-bet * z1)
     am3 = (z2 ** 2. / gam + 2. * z2 / gam ** 2 + 2. / gam ** 3.) * np.exp(-gam * z2) \
-          - (z1 ** 2. / gam + 2. * z1 / gam ** 2 + 2. / gam ** 3.) * np.exp(-gam * z1)
+        - (z1 ** 2. / gam + 2. * z1 / gam ** 2 + 2. / gam ** 3.) * np.exp(-gam * z1)
 
     return (f0 * ak1 - f1 * ak2 - f2 * ak3), (f0 * am1 - f1 * am2 - f2 * am3)
 

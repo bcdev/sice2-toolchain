@@ -5,11 +5,11 @@
     <folder name="Actions">
 
         <folder name="Operators">
-            <file name="Sice2V21OpAction.instance">
+            <file name="Sice2SnowV21OpAction.instance">
                 <attr name="instanceCreate"
                       methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
-                <attr name="operatorName" stringvalue="py_sice2_v21_op"/>
+                <attr name="operatorName" stringvalue="Sice2.Snow.Olci"/>
                 <attr name="displayName" stringvalue="SICE2 v2.1 (OLCI L1b)"/>
                 <attr name="dialogTitle" stringvalue="SICE2 v2.1 (OLCI L1b)"/>
                 <attr name="helpId" stringvalue="sice2SnowRetrievalTool"/>  <!--The helpId if help contents is provided-->
@@ -19,11 +19,11 @@
         </folder>
 
         <folder name="Operators">
-            <file name="Sice2V21TifdirsOpAction.instance">
+            <file name="Sice2SnowV21TifdirsOpAction.instance">
                 <attr name="instanceCreate"
                       methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
-                <attr name="operatorName" stringvalue="py_sice2_v21_tifdirs_op"/>
+                <attr name="operatorName" stringvalue="Sice2.Snow.Olci.Tifs"/>
                 <attr name="displayName" stringvalue="SICE2 v2.1 (OLCI single TIFs, toolchain mode)"/>
                 <attr name="dialogTitle" stringvalue="SICE2 v2.1 (OLCI single TIFs, toolchain mode)"/>
                 <attr name="helpId" stringvalue="sice2SnowRetrievalTool"/>  <!--The helpId if help contents is provided-->
@@ -37,7 +37,7 @@
                 <attr name="instanceCreate"
                       methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
-                <attr name="operatorName" stringvalue="py_sice2_scda_op"/>
+                <attr name="operatorName" stringvalue="Sice2.Cloudmask.Slstr"/>
                 <attr name="displayName" stringvalue="SCDA from SLSTR L1b"/>
                 <attr name="dialogTitle" stringvalue="SCDA from SLSTR L1b"/>
                 <attr name="helpId" stringvalue="sice2ScdaTool"/>  <!--The helpId if help contents is provided-->
@@ -51,7 +51,7 @@
                 <attr name="instanceCreate"
                       methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="delegate" methodvalue="org.esa.snap.core.gpf.ui.DefaultOperatorAction.create"/>
-                <attr name="operatorName" stringvalue="py_sice2_scda_tifdirs_op"/>
+                <attr name="operatorName" stringvalue="Sice2.Cloudmask.Slstr.Tifs"/>
                 <attr name="displayName" stringvalue="SCDA from SLSTR single TIFs (SICE2 toolchain mode)"/>
                 <attr name="dialogTitle" stringvalue="SCDA from SLSTR single TIFs (SICE2 toolchain mode)"/>
                 <attr name="helpId" stringvalue="sice2ScdaTool"/>  <!--The helpId if help contents is provided-->
@@ -82,15 +82,15 @@
 
             <folder name="Thematic Land Processing">
                 <folder name="Snow Properties Processor">
-                    <file name="Sice2V21OpAction.shadow">
+                    <file name="Sice2SnowV21OpAction.shadow">
                         <attr name="originalFile"
-                              stringvalue="Actions/Operators/Sice2V21OpAction.instance"/>
+                              stringvalue="Actions/Operators/Sice2SnowV21OpAction.instance"/>
                         <attr name="position" intvalue="13000"/>
                     </file>
 
-                    <file name="Sice2V21TifdirsOpAction.shadow">
+                    <file name="Sice2SnowV21TifdirsOpAction.shadow">
                         <attr name="originalFile"
-                              stringvalue="Actions/Operators/Sice2V21TifdirsOpAction.instance"/>
+                              stringvalue="Actions/Operators/Sice2SnowV21TifdirsOpAction.instance"/>
                         <attr name="position" intvalue="14000"/>
                     </file>
                 </folder>

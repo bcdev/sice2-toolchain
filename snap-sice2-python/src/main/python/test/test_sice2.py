@@ -3,7 +3,7 @@ import numpy as np
 import xarray as xr
 
 import sice2_constants
-import sice2_v21_utils
+import sice2_utils
 
 
 # noinspection PyUnresolvedReferences
@@ -99,21 +99,21 @@ class TestSice2(unittest.TestCase):
         rad = 39.03614
         sza = 82.5072
         flux = 1472.06
-        refl = sice2_v21_utils.rad_to_refl(rad, sza, flux)
+        refl = sice2_utils.rad_to_refl(rad, sza, flux)
         self.assertAlmostEqual(0.6388, refl, 3)
 
     # @unittest.skip("skipping test...")
     def test_get_tif_source_product_paths(self):
         # adapt filepath before activating this test...
         tif_input_dir = PureWindowsPath("D:\\olaf\\bc\\sice2\\geus_sice2\\pySICEv21_testdata")
-        tif_source_product_paths = sice2_v21_utils.get_tif_source_product_paths(str(tif_input_dir))
+        tif_source_product_paths = sice2_utils.get_tif_source_product_paths(str(tif_input_dir))
         self.assertIsNotNone(tif_source_product_paths)
         self.assertEqual(27, len(tif_source_product_paths))
 
     def test_get_valid_expression_filter_array(self):
         flagname = 'WQSF'
         valid_pixel_expr = '(WQSF.WATER and Oa10_reflectance < 0.13)   or (WQSF.LAND and  not    WQSF.CLOUD)'
-        condition = sice2_v21_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
+        condition = sice2_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
                                                                       sice2_constants.
                                                                       OLCI_L2_IPF_BITMASK_FLAG_CODING_DICT)
 
@@ -122,7 +122,7 @@ class TestSice2(unittest.TestCase):
 
         variables_in_expr_dict = {'WQSF': wqsf_arr, 'Oa10_reflectance': oa10_reflectance_arr}
 
-        filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
+        filter_array = sice2_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
         expected_arr = np.array([[False, False, True], [True, False, False], [True, False, True]])
         self.assertSequenceEqual(filter_array.tolist(), expected_arr.tolist())
 
@@ -131,7 +131,7 @@ class TestSice2(unittest.TestCase):
         flagname = 'pixel_classif_flags'
         # Default:
         valid_pixel_expr = sice2_constants.DEFAULT_IDEPIX_VALID_PIXEL_EXPR
-        condition = sice2_v21_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
+        condition = sice2_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
                                                                         sice2_constants.
                                                                         IDEPIX_BITMASK_FLAG_CODING_DICT)
 
@@ -139,7 +139,7 @@ class TestSice2(unittest.TestCase):
 
         variables_in_expr_dict = {'pixel_classif_flags': idepix_arr}
 
-        filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
+        filter_array = sice2_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
         # 'True' means valid!!
         expected_arr = np.array([[True, False, True], [True, False, False], [True, False, False]])
         self.assertSequenceEqual(filter_array.tolist(), expected_arr.tolist())
@@ -147,7 +147,7 @@ class TestSice2(unittest.TestCase):
         flagname = 'pixel_classif_flags'
         # Something weird:
         valid_pixel_expr = '(not pixel_classif_flags.IDEPIX_LAND and Oa10_reflectance < 0.13)   or (not pixel_classif_flags.IDEPIX_LAND and    pixel_classif_flags.IDEPIX_CLOUD)'
-        condition = sice2_v21_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
+        condition = sice2_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
                                                                         sice2_constants.
                                                                         IDEPIX_BITMASK_FLAG_CODING_DICT)
 
@@ -156,7 +156,7 @@ class TestSice2(unittest.TestCase):
 
         variables_in_expr_dict = {'pixel_classif_flags': idepix_arr, 'Oa10_reflectance': oa10_reflectance_arr}
 
-        filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
+        filter_array = sice2_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
         expected_arr = np.array([[True, True, True], [True, False, True], [True, True, True]])
         self.assertSequenceEqual(filter_array.tolist(), expected_arr.tolist())
 
@@ -165,13 +165,13 @@ class TestSice2(unittest.TestCase):
         flagname = 'scda_cloud_mask'
         # Default:
         valid_pixel_expr = sice2_constants.DEFAULT_SCDA_VALID_PIXEL_EXPR
-        condition = sice2_v21_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
+        condition = sice2_utils.get_condition_from_valid_pixel_expr(flagname, valid_pixel_expr,
                                                                         sice2_constants.
                                                                         SCDA_BITMASK_FLAG_CODING_DICT)
         scda_arr = np.array([[1, 2, 4], [4, 4, 2], [1, 1, 2]])
         variables_in_expr_dict = {'scda_cloud_mask': scda_arr}
 
-        filter_array = sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
+        filter_array = sice2_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict, 3, 3)
         # 'True' means valid!!
         expected_arr = np.array([[False, True, False], [False, False, True], [False, False, True]])
         self.assertSequenceEqual(filter_array.tolist(), expected_arr.tolist())

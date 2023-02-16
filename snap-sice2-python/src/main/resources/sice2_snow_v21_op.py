@@ -1,13 +1,12 @@
 import datetime
+import os
+import platform
+import sys
+import tempfile
+import time
 from math import ceil
 
-import platform
-import tempfile
-import sys
-import os
-import time
 import numpy as np
-
 import xarray as xr
 
 # Append esa_snappy installation dir to path:
@@ -15,8 +14,6 @@ sys.path.append(os.path.expanduser('~') + os.sep + '.snap' + os.sep + 'snap-pyth
 
 import esa_snappy
 from esa_snappy import ProductData
-from esa_snappy import ProductIO
-from esa_snappy import FlagCoding
 
 # If a Java type is needed which is not imported by snappy by default it can be retrieved manually.
 # First import jpy
@@ -35,16 +32,16 @@ from esa_snappy import ProductUtils
 from esa_snappy import GPF
 
 import sice2_constants
-import sice2_v21_algo
-import sice2_v21_io
-import sice2_v21_utils
+import sice2_io
+import sice2_utils
+import sice2_snow_v21_algo
 
 
-class Sice2V21Op:
+class Sice2SnowV21Op:
     """
-    The Sice2 GPF operator
+    SICE2 operator for the retrieval of snow properties
 
-    Authors: O.Danne, 2022
+    @author: Olaf Danne, BC (Brockmann Consult)
     """
 
     def __init__(self):
@@ -161,11 +158,11 @@ class Sice2V21Op:
         if self.cloud_product is not None:
             if self.cloud_product.containsBand(sice2_constants.SCDA_FLAG_BAND_NAME):
                 ProductUtils.copyBand(sice2_constants.SCDA_FLAG_BAND_NAME, self.cloud_product, snow_product, True)
-                sice2_v21_io.create_scda_bitmask(snow_product)
+                sice2_io.create_scda_bitmask(snow_product)
             elif self.cloud_product.containsBand(sice2_constants.IDEPIX_FLAG_BAND_NAME):
                 ProductUtils.copyBand(sice2_constants.IDEPIX_FLAG_BAND_NAME, self.cloud_product, snow_product, True)
                 ProductUtils.copyFlagCoding(self.cloud_mask_band.getFlagCoding(), snow_product)
-                sice2_v21_io.create_idepix_bitmask(snow_product)
+                sice2_io.create_idepix_bitmask(snow_product)
 
         context.setTargetProduct(snow_product)
 
@@ -209,14 +206,14 @@ class Sice2V21Op:
 
         self.isnow_band = snow_product.addBand('isnow', esa_snappy.ProductData.TYPE_INT16)
         self.isnow_band.setDescription('Snow retrieval flag')
-        snow_retrieval_flag_coding = sice2_v21_io.create_snow_retrieval_flag_coding(sice2_constants.SNOW_TYPE_FLAG)
+        snow_retrieval_flag_coding = sice2_io.create_snow_retrieval_flag_coding(sice2_constants.SNOW_TYPE_FLAG)
         self.isnow_band.setSampleCoding(snow_retrieval_flag_coding)
         snow_product.getFlagCodingGroup().add(snow_retrieval_flag_coding)
-        sice2_v21_io.create_snow_retrieval_bitmask(snow_product)
+        sice2_io.create_snow_retrieval_bitmask(snow_product)
 
         self.pol_type_band = snow_product.addBand('pol_type', esa_snappy.ProductData.TYPE_INT16)
         self.pol_type_band.setDescription('Type of pollutant')
-        pol_type_index_coding, image_info = sice2_v21_io.create_pol_type_index_coding(sice2_constants.POL_TYPE_FLAG)
+        pol_type_index_coding, image_info = sice2_io.create_pol_type_index_coding(sice2_constants.POL_TYPE_FLAG)
         self.pol_type_band.setImageInfo(image_info)
         snow_product.getIndexCodingGroup().add(pol_type_index_coding)
         self.pol_type_band.setSampleCoding(pol_type_index_coding)
@@ -349,7 +346,7 @@ class Sice2V21Op:
         ##### SNOW RETRIEVAL:
         chunk_size = int(min(num_pixels, 250000))
         print('Call process_by_chunk: chunksize=' + str(chunk_size))
-        snow = sice2_v21_algo.process_by_chunk(olci_scene, chunk_size=chunk_size)
+        snow = sice2_snow_v21_algo.process_by_chunk(olci_scene, chunk_size=chunk_size)
         #####
 
         # Extract output from 'snow' xarray.Dataset:
@@ -463,7 +460,7 @@ class Sice2V21Op:
 
             print('flagname: ' + flagname)
             print('expr: ' + expr)
-            condition = sice2_v21_utils.get_condition_from_valid_pixel_expr(flagname, expr, flag_coding_dict)
+            condition = sice2_utils.get_condition_from_valid_pixel_expr(flagname, expr, flag_coding_dict)
             print('condition: ' + condition)
             # identify which of the product variables are in the valid expr...
             variables_in_expr_dict = {}
@@ -480,7 +477,7 @@ class Sice2V21Op:
                         variables_in_expr_dict[name] = np.array(_tile.getSamplesFloat(), dtype=np.float32)
                     variables_in_expr_dict[name] = np.reshape(variables_in_expr_dict[name], (rect.width, rect.height))
 
-            return sice2_v21_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict,
+            return sice2_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict,
                                                                      rect.width, rect.height).flatten()
         else:
             # no filtering
