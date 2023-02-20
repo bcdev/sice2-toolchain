@@ -35,8 +35,22 @@
             <description>If selected, spectral albedos and BRRs are written to the target product.</description>
             <label>Write spectral albedos</label>
             <dataType>java.lang.Boolean</dataType>
-            <defaultValue>true</defaultValue>
+            <defaultValue>false</defaultValue>
         </parameter>
+<!--        <parameter>-->
+<!--            <name>chunksize</name>-->
+<!--            <description>Chunksize.</description>-->
+<!--            <label>Chunksize</label>-->
+<!--            <dataType>java.lang.Integer</dataType>-->
+<!--            <defaultValue>250000</defaultValue>-->
+<!--        </parameter>-->
+<!--        <parameter>-->
+<!--            <name>tilesize</name>-->
+<!--            <description>Tilesize.</description>-->
+<!--            <label>Tilesize</label>-->
+<!--            <dataType>java.lang.Integer</dataType>-->
+<!--            <defaultValue>512</defaultValue>-->
+<!--        </parameter>-->
     </parameters>
 
 </operator>

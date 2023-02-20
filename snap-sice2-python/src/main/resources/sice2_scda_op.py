@@ -61,26 +61,26 @@ class Sice2ScdaOp:
         print('sys.version_info(): ' + str(sys.version_info) + '\n')
         print('sys.version_info > (3, 0): ' + str(sys.version_info > (3, 0)))
 
-        self.source_product = context.getSourceProduct('l1bProduct')
-        print('initialize: source product location is', self.source_product.getFileLocation())
+        source_product = context.getSourceProduct('l1bProduct')
+        print('initialize: source product location is', source_product.getFileLocation())
 
-        width = self.source_product.getSceneRasterWidth()
-        height = self.source_product.getSceneRasterHeight()
+        width = source_product.getSceneRasterWidth()
+        height = source_product.getSceneRasterHeight()
 
         print('Start sice2_scda_op...')
 
         #####
-        self.r550_radiance_band = self._get_band(self.source_product, "S1_radiance_an")
-        self.r1600_radiance_band = self._get_band(self.source_product, "S5_radiance_an")
-        self.sza_tpg = self._get_band(self.source_product, "solar_zenith_tn")
+        self.r550_radiance_band = self._get_band(source_product, "S1_radiance_an")
+        self.r1600_radiance_band = self._get_band(source_product, "S5_radiance_an")
+        self.sza_tpg = self._get_band(source_product, "solar_zenith_tn")
 
         # we need to resample the required BT bands onto the grid of the radiance bands:
         # 1. band subset for BT bands:
         bt_subset_product = Product('BT subset', 'BT subset', width, height)
-        ProductUtils.copyGeoCoding(self.source_product, bt_subset_product)
-        ProductUtils.copyBand('S7_BT_in', self.source_product, bt_subset_product, True)
-        ProductUtils.copyBand('S8_BT_in', self.source_product, bt_subset_product, True)
-        ProductUtils.copyBand('S9_BT_in', self.source_product, bt_subset_product, True)
+        ProductUtils.copyGeoCoding(source_product, bt_subset_product)
+        ProductUtils.copyBand('S7_BT_in', source_product, bt_subset_product, True)
+        ProductUtils.copyBand('S8_BT_in', source_product, bt_subset_product, True)
+        ProductUtils.copyBand('S9_BT_in', source_product, bt_subset_product, True)
 
         # 2. resample subset product with BT bands:
         resample_parameters = HashMap()
@@ -95,10 +95,10 @@ class Sice2ScdaOp:
 
         # Create the target product
         scda_product = Product('py_SICE21_scda', 'py_SICE21_scda', width, height)
-        ProductUtils.copyGeoCoding(self.source_product, scda_product)
-        ProductUtils.copyMetadata(self.source_product, scda_product)
-        scda_product.setStartTime(self.source_product.getStartTime())
-        scda_product.setEndTime(self.source_product.getEndTime())
+        ProductUtils.copyGeoCoding(source_product, scda_product)
+        ProductUtils.copyMetadata(source_product, scda_product)
+        scda_product.setStartTime(source_product.getStartTime())
+        scda_product.setEndTime(source_product.getEndTime())
 
         context.setTargetProduct(scda_product)
         self.add_target_bands(scda_product)
@@ -115,12 +115,13 @@ class Sice2ScdaOp:
 
     def add_target_bands(self, scda_product):
         """
+        Adds bands to SCDA target product.
 
-        :param scda_product:
-        :return:
+        :param scda_product: SCDA target product
+        :return: void
         """
 
-        # SCDA as a flag band!
+        # set up SCDA as a flag band!
         self.scda_band = scda_product.addBand('scda_cloud_mask', esa_snappy.ProductData.TYPE_UINT8)
         self.scda_band.setDescription('SCDA binary cloud mask')
         scda_flag_coding = sice2_io.create_scda_flag_coding(sice2_constants.SCDA_FLAG)

@@ -55,16 +55,11 @@ class Sice2ScdaTifdirsOp:
         print('Start sice2_scda_tifdirs_op...')
         print('Input folder:', tif_input_directory)
 
-        self.called_compute_tile_stack = 0
-
         r550_product = ProductIO.readProduct(tif_input_directory + os.sep + "r_TOA_S1.tif")
         r1600_product = ProductIO.readProduct(tif_input_directory + os.sep + "r_TOA_S5.tif")
         bt37_product = ProductIO.readProduct(tif_input_directory + os.sep + "BT_S7.tif")
         bt11_product = ProductIO.readProduct(tif_input_directory + os.sep + "BT_S8.tif")
         bt12_product = ProductIO.readProduct(tif_input_directory + os.sep + "BT_S9.tif")
-
-        self.width = r550_product.getSceneRasterWidth()
-        self.height = r550_product.getSceneRasterHeight()
 
         self.r550_band = self._get_band(r550_product, "S1_reflectance_an")
         self.r1600_band = self._get_band(r1600_product, "S5_reflectance_an")
@@ -75,7 +70,9 @@ class Sice2ScdaTifdirsOp:
         ##############################
 
         # Create the target product
-        scda_product = esa_snappy.Product('py_SICE21_scda', 'py_SICE21_scda', self.width, self.height)
+        width = r550_product.getSceneRasterWidth()
+        height = r550_product.getSceneRasterHeight()
+        scda_product = esa_snappy.Product('py_SICE21_scda', 'py_SICE21_scda', width, height)
         esa_snappy.ProductUtils.copyGeoCoding(r550_product, scda_product)
         esa_snappy.ProductUtils.copyMetadata(r550_product, scda_product)
         scda_product.setStartTime(r550_product.getStartTime())
@@ -83,6 +80,9 @@ class Sice2ScdaTifdirsOp:
 
         context.setTargetProduct(scda_product)
         self.add_target_bands(scda_product)
+
+        # for debugging:
+        # self.called_compute_tile_stack = 0
 
         f.write('end initialize.')
         print('end initialize.')
@@ -96,10 +96,12 @@ class Sice2ScdaTifdirsOp:
 
     def add_target_bands(self, scda_product):
         """
+        Adds bands to SCDA target product.
 
-        :param scda_product:
-        :return:
+        :param scda_product: SCDA target product
+        :return: void
         """
+
         self.scda_band = scda_product.addBand('scda_cloud_mask', esa_snappy.ProductData.TYPE_UINT8)
         self.scda_band.setDescription('SCDA binary cloud mask')
         self.scda_band.setNoDataValue(255)
@@ -113,7 +115,7 @@ class Sice2ScdaTifdirsOp:
 
     def computeTileStack(self, context, target_tiles, target_rectangle):
 
-        # debugging:
+        # for debugging:
         # num_pixels = target_rectangle.width * target_rectangle.height
         # print('Call computeTileStack: num_pixels=' + str(num_pixels))
         # print('target_rectangle.x =' + str(target_rectangle.x))
@@ -169,5 +171,3 @@ class Sice2ScdaTifdirsOp:
                 if not band:
                     raise RuntimeError('Product has no band or tpg with name', band_name)
         return band
-
-

@@ -19,14 +19,6 @@ from esa_snappy import ProductData
 # First import jpy
 from esa_snappy import jpy
 
-# and then import the type
-Float = jpy.get_type('java.lang.Float')
-Color = jpy.get_type('java.awt.Color')
-
-BitSetter = jpy.get_type('org.esa.snap.core.util.BitSetter')
-BandMathsType = jpy.get_type('org.esa.snap.core.datamodel.Mask$BandMathsType')
-HashMap = jpy.get_type('java.util.HashMap')
-
 from esa_snappy import Product
 from esa_snappy import ProductUtils
 from esa_snappy import GPF
@@ -35,6 +27,14 @@ import sice2_constants
 import sice2_io
 import sice2_utils
 import sice2_snow_v21_algo
+
+# and then import the type
+Float = jpy.get_type('java.lang.Float')
+Color = jpy.get_type('java.awt.Color')
+
+BitSetter = jpy.get_type('org.esa.snap.core.util.BitSetter')
+BandMathsType = jpy.get_type('org.esa.snap.core.datamodel.Mask$BandMathsType')
+HashMap = jpy.get_type('java.util.HashMap')
 
 
 class Sice2SnowV21Op:
@@ -51,11 +51,12 @@ class Sice2SnowV21Op:
         """
         GPF initialize method
 
-        :param operator
+        :param context
         :return:
         """
-        t_start = datetime.datetime.now()
-        start_time = time.process_time()
+
+        print("Start initialize: " , datetime.datetime.now())
+        self.curr_time = round(time.time())
 
         resource_root = os.path.dirname(__file__)
         f = open(tempfile.gettempdir() + '/sice2_py.log', 'w')
@@ -67,7 +68,6 @@ class Sice2SnowV21Op:
 
         print('platform.system(): ' + platform.system() + '\n')
         print('sys.version_info(): ' + str(sys.version_info) + '\n')
-        print('sys.version_info > (3, 0): ' + str(sys.version_info > (3, 0)))
 
         # Via the context object the source product which shall be processed can be retrieved
         self.source_product = context.getSourceProduct('l1bProduct')
@@ -107,8 +107,11 @@ class Sice2SnowV21Op:
                 raise Exception('Selected cloud product is not valid.')
 
         self.write_spectral_albedos = context.getParameter('writeSpectralAlbedos')
+        # self.tilesize = context.getParameter('tilesize')
+        # self.chunksize = self.tilesize * self.tilesize
 
         self.called_compute_tile_stack = 0
+        self.tiles_processed = []  # list to mark processed tiles (by ([rect.x, rect.y]]
 
         #####
         self.input_products_all_band_names = []
@@ -145,15 +148,16 @@ class Sice2SnowV21Op:
 
         # Create the target product
         snow_product = esa_snappy.Product('py_SICE21_snow', 'py_SICE21_snow', self.width, self.height)
-        self.pref_tile_width = 1000
-        self.pref_tile_height = 1000
-        snow_product.setPreferredTileSize(self.pref_tile_width, self.pref_tile_height)
-        self.num_tiles_to_process = ceil(self.width / self.pref_tile_width) * ceil(self.height / self.pref_tile_height)
+        snow_product.setPreferredTileSize(self.source_product.getPreferredTileSize())
         esa_snappy.ProductUtils.copyGeoCoding(self.source_product, snow_product)
         esa_snappy.ProductUtils.copyMetadata(self.source_product, snow_product)
         snow_product.setStartTime(self.source_product.getStartTime())
         snow_product.setEndTime(self.source_product.getEndTime())
         snow_product.setAutoGrouping("albedo_spectral_spherical:albedo_spectral_planar:rBRR")
+
+        pref_tile_width = self.source_product.getPreferredTileSize().width
+        pref_tile_height = self.source_product.getPreferredTileSize().height
+        self.num_tiles_to_process = ceil(self.width / pref_tile_width) * ceil(self.height / pref_tile_height)
 
         if self.cloud_product is not None:
             if self.cloud_product.containsBand(sice2_constants.SCDA_FLAG_BAND_NAME):
@@ -169,20 +173,16 @@ class Sice2SnowV21Op:
         self.add_target_bands(snow_product)
 
         f.write('end initialize.')
-        print('end initialize.')
-        t_end = datetime.datetime.now()
-        print('SNAPPY SICE2 processing time (seconds): ' + str((t_end - t_start).seconds))
-
-        end_time = time.process_time()
-        print('SNAPPY SICE2 processing time (CPU seconds): ' + str((end_time - start_time)))
+        print("End initialize: " , datetime.datetime.now())
 
         f.close()
 
     def add_target_bands(self, snow_product):
         """
+        Adds bands to snow target product.
 
-        :param snow_product:
-        :return:
+        :param snow_product: snow target product
+        :return: void
         """
         self.grain_diameter_band = snow_product.addBand('grain_diameter', esa_snappy.ProductData.TYPE_FLOAT32)
         self.grain_diameter_band.setDescription('Snow grain diameter')
@@ -279,17 +279,32 @@ class Sice2SnowV21Op:
                 r_brr_band.setNoDataValueUsed(True)
                 self.r_brr_bands.append(r_brr_band)
 
-    def computeTileStack_test(self, context, target_tiles, target_rectangle):
-        pass
 
     def computeTileStack(self, context, target_tiles, target_rectangle):
+        """
+        The GPF computeTileStack implementation.
+
+        :param context: operator context
+        :param target_tiles: target tiles
+        :param target_rectangle: target rectangle
+        :return: void
+        """
 
         num_pixels = target_rectangle.width * target_rectangle.height
         print('Call computeTileStack: num_pixels=' + str(num_pixels))
-        print('target_rectangle.x =' + str(target_rectangle.x))
-        print('target_rectangle.y =' + str(target_rectangle.y))
-        print('target_rectangle.width =' + str(target_rectangle.width))
-        print('target_rectangle.height =' + str(target_rectangle.height))
+        print('Target_rectangle.x =' + str(target_rectangle.x))
+        print('Target_rectangle.y =' + str(target_rectangle.y))
+
+        # Check if tile was already processed. Workaround for https://senbox.atlassian.net/browse/SNAP-1542 , 20230220
+        if [target_rectangle.x, target_rectangle.y] in self.tiles_processed:
+            print('Tile ' + str(target_rectangle.x) + '/' + str(target_rectangle.y) + 'already processed - leaving '
+                                                                                      'computeTileStack.')
+            return
+        self.tiles_processed.append(([target_rectangle.x, target_rectangle.y]))
+
+        print("Time: " , datetime.datetime.now())
+        print('Target_rectangle.width =' + str(target_rectangle.width))
+        print('Target_rectangle.height =' + str(target_rectangle.height))
         self.called_compute_tile_stack = self.called_compute_tile_stack + 1
         print('Tile ' + str(self.called_compute_tile_stack) + ' of ' + str(self.num_tiles_to_process))
 
@@ -343,10 +358,19 @@ class Sice2SnowV21Op:
             toa.append(np.clip(_toa, 0, 1))
         olci_scene['toa'] = xr.concat(toa, dim='band')
 
-        ##### SNOW RETRIEVAL:
-        chunk_size = int(min(num_pixels, 250000))
-        print('Call process_by_chunk: chunksize=' + str(chunk_size))
-        snow = sice2_snow_v21_algo.process_by_chunk(olci_scene, chunk_size=chunk_size)
+        # #### SNOW RETRIEVAL:
+        # chunk_size = int(min(num_pixels, 250000))
+        self.chunksize = target_rectangle.width * target_rectangle.height
+        print('Call process: chunksize=' + str(self.chunksize))
+        # print('Call process_by_chunk: chunksize=' + str(self.chunksize))
+        ct = datetime.datetime.now()
+        print("current time:-", ct)
+        # snow = sice2_snow_v21_algo.process_by_chunk(olci_scene, chunk_size=self.chunksize)
+        snow = sice2_snow_v21_algo.process(olci_scene)
+        # print('Back from process_by_chunk')
+        print('Back from process')
+        ct = datetime.datetime.now()
+        print("current time:-", ct)
         #####
 
         # Extract output from 'snow' xarray.Dataset:
@@ -397,6 +421,10 @@ class Sice2SnowV21Op:
                 target_tiles.get(self.albedo_spectral_spherical_bands[i]).setSamples(albedo_spectral_spherical_data[i])
                 target_tiles.get(self.albedo_spectral_planar_bands[i]).setSamples(albedo_spectral_planar_data[i])
                 target_tiles.get(self.r_brr_bands[i]).setSamples(r_brr_data[i])
+        print("End computrTileStack: " , datetime.datetime.now())
+
+        acc_time = round(time.time())
+        print("Accumulated time:", acc_time - self.curr_time, " seconds")
 
     def dispose(self, operator):
         """
@@ -478,7 +506,7 @@ class Sice2SnowV21Op:
                     variables_in_expr_dict[name] = np.reshape(variables_in_expr_dict[name], (rect.width, rect.height))
 
             return sice2_utils.get_valid_expression_filter_array(condition, variables_in_expr_dict,
-                                                                     rect.width, rect.height).flatten()
+                                                                 rect.width, rect.height).flatten()
         else:
             # no filtering
             return np.full((rect.width * rect.height), True)

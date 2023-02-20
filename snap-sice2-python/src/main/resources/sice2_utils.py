@@ -5,7 +5,6 @@
 """
 import os
 import re
-from math import ceil
 
 import numpy as np
 
@@ -44,12 +43,12 @@ def get_tif_source_product_paths(tif_input_directory):
 
 def get_condition_from_valid_pixel_expr(flagname, expr, flag_coding_dict):
     """
-    Taken from OMAPS.
+    Gets condition string from a valid pixel expression. (Taken from OMAPS project).
 
     :param flagname:
     :param expr:
     :param flag_coding_dict:
-    :return:
+    :return: condition
     """
     # consider Python logical and comparison operators (https://www.w3schools.com/python/python_operators.asp)
     # e.g. valid_pixel_expr = '(WQSF.WATER  and Oa10_reflectance < 0.13) or (WQSF.LAND and not WQSF.CLOUD)'

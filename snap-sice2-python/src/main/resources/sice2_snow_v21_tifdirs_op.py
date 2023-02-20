@@ -16,8 +16,8 @@ from esa_snappy import jpy
 
 # and then import the type
 import sice2_constants
-import sice2_utils
 import sice2_snow_v21_algo
+import sice2_utils
 
 Float = jpy.get_type('java.lang.Float')
 Color = jpy.get_type('java.awt.Color')
@@ -37,7 +37,7 @@ class Sice2SnowV21TifdirsOp:
         """
         GPF initialize method
 
-        :param operator
+        :param context
         :return:
         """
         t_start = datetime.datetime.now()
@@ -96,10 +96,10 @@ class Sice2SnowV21TifdirsOp:
         # Create the target product
         snow_product = esa_snappy.Product('py_SICE21_snow', 'py_SICE21_snow', self.width, self.height)
         # snow_product.setPreferredTileSize(self.width, self.height)
-        self.pref_tile_width = 1000
-        self.pref_tile_height = 1000
-        snow_product.setPreferredTileSize(self.pref_tile_width, self.pref_tile_height)
-        self.num_tiles_to_process = ceil(self.width / self.pref_tile_width) * ceil(self.height / self.pref_tile_height)
+        pref_tile_width = 1000
+        pref_tile_height = 1000
+        snow_product.setPreferredTileSize(pref_tile_width, pref_tile_height)
+        self.num_tiles_to_process = ceil(self.width / pref_tile_width) * ceil(self.height / pref_tile_height)
         esa_snappy.ProductUtils.copyGeoCoding(sza_product, snow_product)
         esa_snappy.ProductUtils.copyMetadata(sza_product, snow_product)
         snow_product.setStartTime(sza_product.getStartTime())
@@ -122,10 +122,11 @@ class Sice2SnowV21TifdirsOp:
 
     def add_target_bands(self, snow_product):
         """
+         Adds bands to snow target product.
 
-        :param snow_product:
-        :return:
-        """
+         :param snow_product: snow target product
+         :return: void
+         """
         self.grain_diameter_band = snow_product.addBand('grain_diameter', esa_snappy.ProductData.TYPE_FLOAT32)
         self.grain_diameter_band.setDescription('Snow grain diameter')
         self.grain_diameter_band.setNoDataValue(Float.NaN)
@@ -207,6 +208,14 @@ class Sice2SnowV21TifdirsOp:
             self.r_brr_bands.append(r_brr_band)
 
     def computeTileStack(self, context, target_tiles, target_rectangle):
+        """
+        The GPF computeTileStack implementation.
+
+        :param context: operator context
+        :param target_tiles: target tiles
+        :param target_rectangle: target rectangle
+        :return: void
+        """
 
         num_pixels = target_rectangle.width * target_rectangle.height
         print('Call computeTileStack: num_pixels=' + str(num_pixels))
@@ -263,7 +272,7 @@ class Sice2SnowV21TifdirsOp:
 
         olci_scene['toa'] = xr.concat(toa, dim='band')
 
-        ### SNOW RETRIEVAL:
+        # ### SNOW RETRIEVAL:
         if num_pixels == 1000000:
             chunk_size = 250000
         else:
@@ -325,8 +334,8 @@ class Sice2SnowV21TifdirsOp:
         """
         pass
 
-
-    def _get_band(self, input_product, band_name):
+    @staticmethod
+    def _get_band(input_product, band_name):
         """
         Gets band from input product by name
         :param input_product
@@ -340,8 +349,8 @@ class Sice2SnowV21TifdirsOp:
                 raise RuntimeError('Product has no band or tpg with name', band_name)
         return band
 
-
-    def _get_var(self, data, width, height, long_name, unit):
+    @staticmethod
+    def _get_var(data, width, height, long_name, unit):
         data_da = xr.DataArray(
             data=data.reshape(width, height),
             dims=["x", "y"],
