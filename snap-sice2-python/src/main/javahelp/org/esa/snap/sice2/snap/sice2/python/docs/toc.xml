@@ -20,7 +20,8 @@
             <tocitem text="Thematic Land Processing">
                 <tocitem text="SICE2 Snow Retrieval Processors" target="sice2SnowRetrievalTool">
                     <tocitem text="Algorithm Specification" target="sice2SnowRetrievalAlgorithmSpecification"/>
-                    <tocitem text="Processor Description" target="sice2SnowRetrievalProcessorDescription"/>
+                    <tocitem text="Processor Description (standard mode)" target="sice2SnowRetrievalProcessorL1Description"/>
+                    <tocitem text="Processor Description (GEUS SICE2 toolchain mode)" target="sice2SnowRetrievalProcessorTifDescription"/>
                 </tocitem>
             </tocitem>
         </tocitem>

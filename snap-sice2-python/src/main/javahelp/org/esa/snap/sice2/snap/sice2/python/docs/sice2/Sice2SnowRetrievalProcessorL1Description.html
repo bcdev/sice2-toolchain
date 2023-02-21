@@ -1,0 +1,297 @@
+<!--
+  ~ Copyright (C) 2010 Brockmann Consult GmbH (info@brockmann-consult.de)
+  ~
+  ~ This program is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU General Public License as published by the Free
+  ~ Software Foundation; either version 3 of the License, or (at your option)
+  ~ any later version.
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT
+  ~ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  ~ FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+  ~ more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along
+  ~ with this program; if not, see http://www.gnu.org/licenses/
+  -->
+
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <title>SNAP Data Processors - SICE2 Snow Retrieval Processors Description</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+
+<table class="header">
+    <tr class="header">
+        <td class="header">&nbsp;
+            SNAP Data Processors - SICE2 Snow Retrieval Processor Description (standard mode)
+        </td>
+        <td class="header" align="right"><a
+                href="nbdocs://org.esa.snap.snap.help/org/esa/snap/snap/help/docs/general/overview/SnapOverview.html"><img
+                src="../images/snap_header.jpg"
+                border=0></a>
+        </td>
+    </tr>
+</table>
+
+<h3>Processor Description</h3>
+
+<h4>I/O Parameters Tab</h4>
+
+<p align="center"><img src="../images/sice2_v21_l1_io.png"></p>
+
+<h5>Source Product Group</h5>
+
+<p class="i1">
+    <b>Name: </b>
+    Used to select the OLCI L1b source product. Use the <b>...</b> button to
+    open a data product currently not opened in the Sentinel Toolbox.
+</p>
+
+<h5>Supported Sentinel-3 OLCI Source Products</h5>
+The following Sentinel-3 OLCI source products are supported for snow retrieval:
+<ul>
+    <li>
+        S3A_OL_1_EFR_*.SEN3:<br>
+        Full Resolution TOA Radiance, after radiometrical and spectral calibration
+    </li>
+    <li>
+        S3A_OL_1_ERR_*.SEN3:<br>
+        Reduced Resolution TOA Radiance, after radiometrical and spectral calibration
+    </li>
+</ul>
+For detailed product descriptions and file naming conventions see the Sentinel-3 OLCI L1b Product User Guide
+(https://sentinel.esa.int/web/sentinel/user-guides/sentinel-3-olci/product-types/level-1b).
+
+
+<h5>Target Product Group</h5>
+
+<p class="i1">
+    <b>Name:</b>
+    Used to specify the name of the target product.
+</p>
+
+<p class="i1">
+    <b>Save to:</b>
+    Used to specify whether the target product should be saved to the file system. The
+    combo box presents a list of file formats.
+</p>
+
+<p class="i1">
+    <b>Open in SNAP:</b>
+    Used to specify whether the target product should be opened in the Sentinel Toolbox.
+    When the target product is not saved, it is opened in the Sentinel Toolbox automatically.
+</p>
+
+<h3>The Processing Parameters</h3>
+
+<p align="center"><img src="../images/sice2_v21_l1_params.png"></p>
+
+<p class="i1">
+    <b>Write spectral albedos: </b><br>
+    If selected, all spectral albedos (spherical and planar, 21 bands each) as well as BRR will be written to the
+    target product. The default is 'false'.
+</p>
+
+<h3>The Processing Result</h3>
+The retrieved snow properties written as bands to the target product are listed in the table below:
+
+<table>
+    <tr>
+        <th>Band name</th>
+        <th>Meaning</th>
+        <th>Unit</th>
+    </tr>
+
+    <tr>
+        <td>grain_diameter</td>
+        <td>Snow grain diameter</td>
+        <td>mm</td>
+    </tr>
+    <tr>
+        <td>snow_specific_area</td>
+        <td>Snow-specific surface area</td>
+        <td>m^{2}kg^{-1}</td>
+    </tr>
+    <tr>
+        <td>al</td>
+        <td>effective absorption length</td>
+        <td>mm</td>
+    </tr>
+    <tr>
+        <td>r0</td>
+        <td>reflectance of a semi-infinite non-absorbing snow layer</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>isnow</td>
+        <td>Snow flag (see table below)</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>pol_type</td>
+        <td>type of pollutant (see table below)</td>
+        <td>Vegetation</td>
+    </tr>
+    <tr>
+        <td>albedo_bb_planar_sw</td>
+        <td>shortwave broadband planar albedo</td>
+        <td>300-2400 nm</td>
+    </tr>
+    <tr>
+        <td>albedo_bb_spherical_sw</td>
+        <td>shortwave broadband spherical albedo</td>
+        <td>300-2400 nm</td>
+    </tr>
+    <tr>
+        <td>factor</td>
+        <td>Snow covered fraction within mixed pixels</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>O3_SICE</td>
+        <td>total ozone (OLCI) corrected for ozone scattering</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>cv1</td>
+        <td>quality check 1 (see ATBD)</td>
+        <td>quality check 1 (see ATBD)</td>
+    </tr>
+    <tr>
+        <td>cv2</td>
+        <td>quality check 2 (see ATBD)</td>
+        <td>quality check 2 (see ATBD)</td>
+    </tr>
+    <tr>
+        <td>impurity_load</td>
+        <td>pollutant load</td>
+        <td>ppm_weight</td>
+    </tr>
+    <tr>
+        <td>albedo_spectral_spherical_nn (nn=01,..,11,16,..,21), optional</td>
+        <td>spectral spherical albedo (OLCI bands 1 to 11 and 16 to 21)</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>albedo_spectral_planar_nn (nn=01,..,11,16,..,21), optional</td>
+        <td>spectral planar albedo (OLCI bands 1 to 11 and 16 to 21)</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>rBRR_nn (nn=01,..,21), optional</td>
+        <td>bottom of the atmosphere surface reflectance (OLCI bands 1 through 21)</td>
+        <td></td>
+    </tr>
+</table>
+
+
+<br>
+
+The coding for the 'isnow' flag is given in the table below:
+
+<table>
+    <tr>
+        <th>Flag name</th>
+        <th>Flag value</th>
+        <th>Description</th>
+    </tr>
+
+    <tr>
+        <td>CLEAN_SNOW</td>
+        <td>1</td>
+        <td>Clean snow</td>
+    </tr>
+    <tr>
+        <td>POLLUTED_SNOW</td>
+        <td>2</td>
+        <td>Polluted snow</td>
+    </tr>
+    <tr>
+        <td>PARTLY_SNOW_COVERED</td>
+        <td>4</td>
+        <td>Partly snow covered pixel</td>
+    </tr>
+    <tr>
+        <td>SZA_OOR</td>
+        <td>8</td>
+        <td>SZA out of range (< 75 deg), no retrival</td>
+    </tr>
+    <tr>
+        <td>RTOA_01_OOR</td>
+        <td>16</td>
+        <td>TOA reflectance at band 1 < 0.1, no retrieval</td>
+    </tr>
+    <tr>
+        <td>RTOA_21_OOR</td>
+        <td>32</td>
+        <td>TOA reflectance at band 21 < 0.2, no retrieval</td>
+    </tr>
+    <tr>
+        <td>GRAIN_DIAMETER_OOR</td>
+        <td>64</td>
+        <td>grain_diameter < 0.1, no retrieval (potential cloud flag)</td>
+    </tr>
+    <tr>
+        <td>SPH_ALB_NEG</td>
+        <td>128</td>
+        <td>Retrieved spherical albedo negative in band 1, 2 or 3</td>
+    </tr>
+    <tr>
+        <td>SPH_ALB_NO_SOLUTION</td>
+        <td>256</td>
+        <td>Impossible to solve snow spherical albedo equation</td>
+    </tr>
+</table>
+
+The target product also provides a corresponding flag mask to visualize the pixel classification through the
+SNAP Mask Manager:
+
+<p align="center">
+    <img src="../images/snow_type_mask.png" border="0">
+</p>
+
+
+The coding for the 'pol_type' index is given in the table below:
+
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Index value</th>
+        <th>Description</th>
+    </tr>
+
+    <tr>
+        <td>SOOT</td>
+        <td>0</td>
+        <td>Soot</td>
+    </tr>
+    <tr>
+        <td>DUST</td>
+        <td>1</td>
+        <td>Dust</td>
+    </tr>
+    <tr>
+        <td>OTHER</td>
+        <td>2</td>
+        <td>Other</td>
+    </tr>
+    <tr>
+        <td>MIXTURE</td>
+        <td>3</td>
+        <td>Mixture</td>
+    </tr>
+</table>
+
+The target product also provides a corresponding colour scheme for the snow type index:
+
+<p align="center">
+    <img src="../images/pol_type_mask.png" border="0">
+</p>
+
+
+
+<hr>
+</body>
+</html>

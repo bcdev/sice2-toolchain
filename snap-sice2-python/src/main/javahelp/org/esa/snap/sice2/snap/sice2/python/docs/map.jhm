@@ -7,7 +7,8 @@
 
     <mapID target="sice2SnowRetrievalTool" url="sice2/Sice2SnowRetrievalTool.html"/>
     <mapID target="sice2SnowRetrievalAlgorithmSpecification" url="sice2/Sice2SnowRetrievalAlgorithmSpecification.html"/>
-    <mapID target="sice2SnowRetrievalProcessorDescription" url="sice2/Sice2SnowRetrievalProcessorDescription.html"/>
+    <mapID target="sice2SnowRetrievalProcessorL1Description" url="sice2/Sice2SnowRetrievalProcessorL1Description.html"/>
+    <mapID target="sice2SnowRetrievalProcessorTifDescription" url="sice2/Sice2SnowRetrievalProcessorTifDescription.html"/>
 
     <mapID target="sice2ScdaTool" url="sice2/Sice2ScdaTool.html"/>
     <mapID target="sice2ScdaAlgorithmSpecification" url="sice2/Sice2ScdaAlgorithmSpecification.html"/>

@@ -55,9 +55,9 @@ def create_snow_retrieval_flag_coding(flag_id):
     snow_retrieval_flag_coding.addFlag("SZA_OOR", BitSetter.setFlag(0, 3),
                                        "SZA out of range (< 75 deg), no retrival")
     snow_retrieval_flag_coding.addFlag("RTOA_01_OOR", BitSetter.setFlag(0, 4),
-                                       "TOA reflectance at band 21 < 0.1, no retrieval")
+                                       "TOA reflectance at band 1 < 0.1, no retrieval")
     snow_retrieval_flag_coding.addFlag("RTOA_21_OOR", BitSetter.setFlag(0, 5),
-                                       "TOA reflectance at band 1 < 0.2, no retrieval")
+                                       "TOA reflectance at band 21 < 0.2, no retrieval")
     snow_retrieval_flag_coding.addFlag("GRAIN_DIAMETER_OOR", BitSetter.setFlag(0, 6),
                                        "grain_diameter < 0.1, no retrieval (potential cloud flag)")
     snow_retrieval_flag_coding.addFlag("SPH_ALB_NEG", BitSetter.setFlag(0, 7),
