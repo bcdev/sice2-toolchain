@@ -1,8 +1,5 @@
-SICE2 SNAP plugins v1.0 README
+SICE2 SNAP plugins v1.1 README
 ==============================
-
-<b>Note:</b> This README shall be regarded as v1.0 draft. It should evolve into a more comprehensive
-guide once the layout of the SICE2 SNAP plugins is finally agreed within the team.
 
 #### Contents of SICE2 SNAP plugins delivery v1.0:
 - snap-sice2-python nbm
@@ -38,7 +35,7 @@ https://github.com/bcdev/sice2-toolchain/blob/master/snap-sice2-python/README.md
     - on Windows: esa_snappy_conf.bat </path/to/python_executable>
     - on Linux: esa_snappy_conf.bash </path/to/python_executable>
 
-#### Run the plugin
+#### Run the snow retrieval processors
 - after successful installation, you should see two operators in SNAP gpt help:
   - gpt -h Sice2.Snow.Olci
   - gpt -h Sice2.Snow.Olci.Tifs
@@ -52,6 +49,19 @@ as input single tif files which were generated before by the pySICE preprocessin
 the output is written again into a single target product containing all variables. If needed, a split into single products can be
 done easily with the SNAP subset operator ('band subset').
   - the two operators are also available in SNAP desktop via menu 'Optical --> Thematic Land Processing'
+
+#### Run the SCDA cloud processors
+- after successful installation, you should now (v1.1) also see two SCDA Cloud Detection operators in SNAP gpt help:
+  - gpt -h Sice2.Cloudmask.Slstr
+  - gpt -h Sice2.Cloudmask.Slstr.Tifs
+  - Again, the first operator can be regarded as the 'main' SCDA Cloud Detection operator. It expects an SLSTR L1 product as input.
+    Subsets in other formats as SAFE are also accepted.  The output is a single product containing the cloud mask as flag band, and NDSI. As for most SNAP operators, the user can select from many possible output formats.
+    This operator is probably the one to be considered for external users.
+  - Again, the second operator basically mirrors the functionality of the pySICEv21 pure Python version. As pySICEv21, this operator takes
+    as input single tif files which were generated before by the pySICE preprocessing chain. However, different from pySICEv21,
+    the output is written again into a single target product containing all variables. If needed, a split into single products can be
+    done easily with the SNAP subset operator ('band subset').
+  - the two operators are also available in SNAP desktop via menu 'Optical --> Preprocessing --> Masking'
 
 #### Performance
 - Sice2.Snow.Olci: Processing of a full OLCI L1 FR scene (4865x4091 pixel) with all spectral variables
@@ -78,12 +88,10 @@ does not seem to work with Python 3.7 (several jpy versions have been tested. Th
 with the underlying native C code. For the moment, we recommend to use Python 3.9 on Linux which has 
 been tested successfully.  
 - the SNAP plugins cannot yet be used on Mac OS platforms (no jpy wheels generated yet)
-- there is no help documentation yet available in SNAP desktop (will be added if the final layout of 
-the operstors is agreed within the team)
 - In SNAP 9 there is a performance issue with the tile-based computation. In an unpredictable manner, 
 a given tile is often computed multiple times. This issue will be adressed with high priority in the 
-upcoming SNAP maintenance/evolution phase (kick-off Nov 16/17th). A current workaround is to use the 
-SICE plugins not from SNAP desktop, but ONLY from the command line with a gpt graph (as illustrated in 
+ongoing SNAP maintenance/evolution phase. A workaround has been implemented in the SICE2 software. 
+The problem does not seem to occur if the processors are run from the command line with a gpt graph (as illustrated in 
 the examples).
 - IdePix cloud mask usage when processing from L1: although we reached significant improvements during 
 the S3Snow project, the detection of clouds over snow remains extremely difficult and is still a 
