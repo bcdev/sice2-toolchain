@@ -12,16 +12,17 @@
             <tocitem text="Preprocessing">
                 <tocitem text="Masking">
                     <tocitem text="SICE2 SLSTR Cloud Detection" target="sice2ScdaTool">
-                        <tocitem text="SCDA Algorithm Specification" target="sice2ScdaAlgorithmSpecification"/>
-                        <tocitem text="SCDA Processor Description" target="sice2ScdaProcessorDescription"/>
+                        <tocitem text="SCDA Processor Description (standard mode)" target="sice2ScdaProcessorL1Description"/>
+                        <tocitem text="SCDA Processor Description (GEUS SICE2 toolchain mode)" target="sice2ScdaProcessorTifDescription"/>
+                        <tocitem text="SCDA Command Line Processing" target="sice2ScdaProcessorCommandLine"/>
                     </tocitem>
                 </tocitem>
             </tocitem>
             <tocitem text="Thematic Land Processing">
                 <tocitem text="SICE2 Snow Retrieval Processors" target="sice2SnowRetrievalTool">
-                    <tocitem text="Algorithm Specification" target="sice2SnowRetrievalAlgorithmSpecification"/>
                     <tocitem text="Processor Description (standard mode)" target="sice2SnowRetrievalProcessorL1Description"/>
                     <tocitem text="Processor Description (GEUS SICE2 toolchain mode)" target="sice2SnowRetrievalProcessorTifDescription"/>
+                    <tocitem text="Command Line Processing" target="sice2SnowRetrievalProcessorCommandLine"/>
                 </tocitem>
             </tocitem>
         </tocitem>

@@ -6,12 +6,13 @@
 <map version="2.0">
 
     <mapID target="sice2SnowRetrievalTool" url="sice2/Sice2SnowRetrievalTool.html"/>
-    <mapID target="sice2SnowRetrievalAlgorithmSpecification" url="sice2/Sice2SnowRetrievalAlgorithmSpecification.html"/>
     <mapID target="sice2SnowRetrievalProcessorL1Description" url="sice2/Sice2SnowRetrievalProcessorL1Description.html"/>
     <mapID target="sice2SnowRetrievalProcessorTifDescription" url="sice2/Sice2SnowRetrievalProcessorTifDescription.html"/>
+    <mapID target="sice2SnowRetrievalProcessorCommandLine" url="sice2/Sice2SnowRetrievalCommandLine.html"/>
 
     <mapID target="sice2ScdaTool" url="sice2/Sice2ScdaTool.html"/>
-    <mapID target="sice2ScdaAlgorithmSpecification" url="sice2/Sice2ScdaAlgorithmSpecification.html"/>
-    <mapID target="sice2ScdaProcessorDescription" url="sice2/Sice2ScdaProcessorDescription.html"/>
+    <mapID target="sice2ScdaProcessorL1Description" url="sice2/Sice2ScdaProcessorL1Description.html"/>
+    <mapID target="sice2ScdaProcessorTifDescription" url="sice2/Sice2ScdaProcessorTifDescription.html"/>
+    <mapID target="sice2ScdaProcessorCommandLine" url="sice2/Sice2ScdaCommandLine.html"/>
 
 </map>

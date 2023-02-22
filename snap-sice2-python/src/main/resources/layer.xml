@@ -12,7 +12,8 @@
                 <attr name="operatorName" stringvalue="Sice2.Snow.Olci"/>
                 <attr name="displayName" stringvalue="SICE2 v2.1 (OLCI L1b)"/>
                 <attr name="dialogTitle" stringvalue="SICE2 v2.1 (OLCI L1b)"/>
-                <attr name="helpId" stringvalue="sice2SnowRetrievalTool"/>  <!--The helpId if help contents is provided-->
+                <attr name="helpId"
+                      stringvalue="sice2SnowRetrievalTool"/>  <!--The helpId if help contents is provided-->
                 <attr name="targetProductNameSuffix" stringvalue="_sice2_snow"/>
                 <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 v2.1 Snow Retrieval."/>
             </file>
@@ -26,9 +27,11 @@
                 <attr name="operatorName" stringvalue="Sice2.Snow.Olci.Tifs"/>
                 <attr name="displayName" stringvalue="SICE2 v2.1 (OLCI single TIFs, toolchain mode)"/>
                 <attr name="dialogTitle" stringvalue="SICE2 v2.1 (OLCI single TIFs, toolchain mode)"/>
-                <attr name="helpId" stringvalue="sice2SnowRetrievalTool"/>  <!--The helpId if help contents is provided-->
+                <attr name="helpId"
+                      stringvalue="sice2SnowRetrievalTool"/>  <!--The helpId if help contents is provided-->
                 <attr name="targetProductNameSuffix" stringvalue="_sice2_snow"/>
-                <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 v2.1 Snow Retrieval. Special version reading from TIF directories."/>
+                <attr name="ShortDescription"
+                      stringvalue="The GPF operator for SICE2 v2.1 Snow Retrieval. Special version reading from TIF directories."/>
             </file>
         </folder>
 
@@ -56,7 +59,8 @@
                 <attr name="dialogTitle" stringvalue="SCDA from SLSTR single TIFs (SICE2 toolchain mode)"/>
                 <attr name="helpId" stringvalue="sice2ScdaTool"/>  <!--The helpId if help contents is provided-->
                 <attr name="targetProductNameSuffix" stringvalue="_sice2_scda"/>
-                <attr name="ShortDescription" stringvalue="The GPF operator for SICE2 SCDA cloud masking. Special version reading from TIF directories."/>
+                <attr name="ShortDescription"
+                      stringvalue="The GPF operator for SICE2 SCDA cloud masking. Special version reading from TIF directories."/>
             </file>
         </folder>
 
@@ -65,18 +69,20 @@
     <folder name="Menu">
         <folder name="Optical">
             <folder name="Preprocessing">
-                <folder name="SLSTR SCDA Cloud Processor">
-                    <file name="Sice2ScdaOpAction.shadow">
-                        <attr name="originalFile"
-                              stringvalue="Actions/Operators/Sice2ScdaOpAction.instance"/>
-                        <attr name="position" intvalue="13000"/>
-                    </file>
+                <folder name="Masking">
+                    <folder name="SLSTR SCDA Cloud Processor">
+                        <file name="Sice2ScdaOpAction.shadow">
+                            <attr name="originalFile"
+                                  stringvalue="Actions/Operators/Sice2ScdaOpAction.instance"/>
+                            <attr name="position" intvalue="13000"/>
+                        </file>
 
-                    <file name="Sice2ScdaTifdirsOpAction.shadow">
-                        <attr name="originalFile"
-                              stringvalue="Actions/Operators/Sice2ScdaTifdirsOpAction.instance"/>
-                        <attr name="position" intvalue="14000"/>
-                    </file>
+                        <file name="Sice2ScdaTifdirsOpAction.shadow">
+                            <attr name="originalFile"
+                                  stringvalue="Actions/Operators/Sice2ScdaTifdirsOpAction.instance"/>
+                            <attr name="position" intvalue="14000"/>
+                        </file>
+                    </folder>
                 </folder>
             </folder>
 
@@ -111,10 +117,10 @@
         see https://senbox.atlassian.net/browse/SNAP-395
     -->
     <!--<folder name="OperatorUIs">-->
-        <!--<file name="org.esa.s3tbx.c2rcc">-->
-            <!--<attr name="operatorName" stringvalue="c2rcc"/>-->
-            <!--<attr name="disableFromGraphBuilder" stringvalue="true"/>-->
-        <!--</file>-->
+    <!--<file name="org.esa.s3tbx.c2rcc">-->
+    <!--<attr name="operatorName" stringvalue="c2rcc"/>-->
+    <!--<attr name="disableFromGraphBuilder" stringvalue="true"/>-->
+    <!--</file>-->
     <!--</folder>-->
 
 

@@ -35,13 +35,13 @@
     </tr>
 </table>
 
-<h3>Processor Description</h3>
+<h2>Processor Description</h2>
 
-<h4>I/O Parameters Tab</h4>
+<h3>I/O Parameters Tab</h3>
 
-<p align="center"><img src="../images/sice2_v21_l1_io.png"></p>
+<img src="../images/sice2_v21_l1_io.png">
 
-<h5>Source Product Group</h5>
+<h4>Source Product Group</h4>
 
 <p class="i1">
     <b>Name: </b>
@@ -49,8 +49,8 @@
     open a data product currently not opened in the Sentinel Toolbox.
 </p>
 
-<h5>Supported Sentinel-3 OLCI Source Products</h5>
-The following Sentinel-3 OLCI source products are supported for snow retrieval:
+<h5>Supported Sentinel-3 OLCI L1b Source Products</h5>
+The following Sentinel-3 OLCI L1b source products are supported for snow retrieval:
 <ul>
     <li>
         S3A_OL_1_EFR_*.SEN3:<br>
@@ -64,8 +64,21 @@ The following Sentinel-3 OLCI source products are supported for snow retrieval:
 For detailed product descriptions and file naming conventions see the Sentinel-3 OLCI L1b Product User Guide
 (https://sentinel.esa.int/web/sentinel/user-guides/sentinel-3-olci/product-types/level-1b).
 
+<h5>Supported Cloud Products</h5>
+The following optional cloud products are supported for exclusion of cloudy pixels in snow retrieval:
+<ul>
+    <li>
+        IdePix <b>[3]</b> pixel classification product obtained from same OLCI L1b as specified above
+    </li>
+    <li>
+        SCDA <b>[4]</b> cloud mask product obtained from SLSTR L1b product which corresponds to the
+        OLCI L1b source product specified above. (The SCDA product is given on the SLSTR grid, resampling
+        to OLCI is done within the SICE2 processor before the snow retrieval.)
+    </li>
+</ul>
 
-<h5>Target Product Group</h5>
+
+<h4>Target Product Group</h4>
 
 <p class="i1">
     <b>Name:</b>
@@ -84,9 +97,13 @@ For detailed product descriptions and file naming conventions see the Sentinel-3
     When the target product is not saved, it is opened in the Sentinel Toolbox automatically.
 </p>
 
-<h3>The Processing Parameters</h3>
+<br>
 
-<p align="center"><img src="../images/sice2_v21_l1_params.png"></p>
+<h3>Processing Parameters Tab</h3>
+
+<img src="../images/sice2_v21_l1_params.png">
+
+<h4>Parameters</h4>
 
 <p class="i1">
     <b>Write spectral albedos: </b><br>
@@ -94,9 +111,12 @@ For detailed product descriptions and file naming conventions see the Sentinel-3
     target product. The default is 'false'.
 </p>
 
+<br>
+
 <h3>The Processing Result</h3>
 The retrieved snow properties written as bands to the target product are listed in the table below:
 
+<br><br>
 <table>
     <tr>
         <th>Band name</th>
@@ -132,7 +152,7 @@ The retrieved snow properties written as bands to the target product are listed 
     <tr>
         <td>pol_type</td>
         <td>type of pollutant (see table below)</td>
-        <td>Vegetation</td>
+        <td></td>
     </tr>
     <tr>
         <td>albedo_bb_planar_sw</td>
@@ -152,17 +172,17 @@ The retrieved snow properties written as bands to the target product are listed 
     <tr>
         <td>O3_SICE</td>
         <td>total ozone (OLCI) corrected for ozone scattering</td>
-        <td></td>
+        <td>kgm^{-2}</td>
     </tr>
     <tr>
         <td>cv1</td>
         <td>quality check 1 (see ATBD)</td>
-        <td>quality check 1 (see ATBD)</td>
+        <td></td>
     </tr>
     <tr>
         <td>cv2</td>
         <td>quality check 2 (see ATBD)</td>
-        <td>quality check 2 (see ATBD)</td>
+        <td></td>
     </tr>
     <tr>
         <td>impurity_load</td>
@@ -187,10 +207,11 @@ The retrieved snow properties written as bands to the target product are listed 
 </table>
 
 
-<br>
+<br><br>
 
 The coding for the 'isnow' flag is given in the table below:
 
+<br><br>
 <table>
     <tr>
         <th>Flag name</th>
@@ -245,14 +266,17 @@ The coding for the 'isnow' flag is given in the table below:
     </tr>
 </table>
 
-The target product also provides a corresponding flag mask to visualize the pixel classification through the
+<br><br>
+
+The target product also provides a corresponding flag mask to visualize the snow type through the
 SNAP Mask Manager:
 
-<p align="center">
+<br><br>
+<p align="left">
     <img src="../images/snow_type_mask.png" border="0">
 </p>
 
-
+<br><br>
 The coding for the 'pol_type' index is given in the table below:
 
 <table>
@@ -284,12 +308,12 @@ The coding for the 'pol_type' index is given in the table below:
     </tr>
 </table>
 
+<br><br>
 The target product also provides a corresponding colour scheme for the snow type index:
 
-<p align="center">
+<p align="left">
     <img src="../images/pol_type_mask.png" border="0">
 </p>
-
 
 
 <hr>
