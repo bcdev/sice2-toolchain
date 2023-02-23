@@ -1,7 +1,7 @@
 SICE2 SNAP plugins v1.1 README
 ==============================
 
-#### Contents of SICE2 SNAP plugins delivery v1.0:
+#### Contents of SICE2 SNAP plugins delivery v1.1:
 - snap-sice2-python nbm
 - esa_snappy nbm
 - esa_snappy_conf.bash, esa_snappy_conf.bat (from esa_snappy package)
@@ -43,7 +43,7 @@ https://github.com/bcdev/sice2-toolchain/blob/master/snap-sice2-python/README.md
 Subsets in other formats as SAFE are also accepted. As we know from S3Snow, an IdePix cloud mask product can be optionally be provided 
 if given on the raster as the OLCI L1b. The output is a single product containing all the variables which pySICEv21 writes into single
 tif files. As for most SNAP operators, the user can select from many possible output formats. 
-This operator is probably the one to be considered for external users.
+This operator should be the standard for external users.
   - The second operator basically mirrors the functionality of the pySICEv21 pure Python version. As pySICEv21, this operator takes
 as input single tif files which were generated before by the pySICE preprocessing chain. However, different from pySICEv21,
 the output is written again into a single target product containing all variables. If needed, a split into single products can be
